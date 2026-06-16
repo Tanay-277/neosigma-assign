@@ -1,0 +1,211 @@
+{
+  "$schema_note": "Slack Block Kit payloads for the take-home. Each entry is one message a bot posts to a channel, with a `blocks` array — the exact shape Slack's Block Kit uses. Your job is to render these faithfully (see README). Block types present in this dataset: `header` (plain_text title), `context` (array of `mrkdwn`/`image` elements, small + muted), `section` (a `text` mrkdwn body AND/OR a `fields` array of 2-col mrkdwn), `divider`, `actions` (array of interactive `elements`). Interactive elements: `button` (has `text`, optional `url`, optional `style`: 'primary' | 'danger' | default, and an `action_id`), and `static_select` (a `placeholder` + `options[]`, each with `text` + `value`, and an `action_id`). `mrkdwn` is Slack's markdown dialect: *bold*, _italic_, `code`, code fences, <url|label> links, :emoji:, and \\n newlines — you must parse a sensible subset. Each message also carries app-level metadata (`scenario`, `channel`, `postedAt`, `traceId`, `lifecycle`) OUTSIDE the blocks array; blocks is the part Slack would actually render. NOTE: the facts in each card (failing span, error, model, cost, severity, feedback) are consistent with the referenced trace in traces.json — the bot's added analysis (root cause, proposed fix, PR) is extra context a real triage bot would attach.",
+  "messages": [
+    {
+      "id": "msg_alert_01",
+      "scenario": "A trace failed when a tool call was refused; the monitor bot posts an alert.",
+      "channel": "#llm-ops",
+      "postedAt": "2026-06-13T22:43:26.500Z",
+      "traceId": "trace_g0116",
+      "lifecycle": "alert",
+      "blocks": [
+        {
+          "type": "header",
+          "text": { "type": "plain_text", "text": ":rotating_light: Trace failed — customer_support_agent", "emoji": true }
+        },
+        {
+          "type": "context",
+          "elements": [
+            { "type": "mrkdwn", "text": "*Status:* Needs attention" },
+            { "type": "mrkdwn", "text": "Posted just now" }
+          ]
+        },
+        {
+          "type": "section",
+          "text": { "type": "mrkdwn", "text": "A staging run hit a `ToolException: connection refused` while calling the `lookup_order` tool, and never completed. The model had already decided to look up the order." }
+        },
+        {
+          "type": "section",
+          "fields": [
+            { "type": "mrkdwn", "text": "*Severity:*\n:red_circle: High" },
+            { "type": "mrkdwn", "text": "*Environment:*\nstaging" },
+            { "type": "mrkdwn", "text": "*Model:*\ngpt-4o" },
+            { "type": "mrkdwn", "text": "*Cost so far:*\n$0.0080" }
+          ]
+        },
+        {
+          "type": "actions",
+          "elements": [
+            { "type": "button", "text": { "type": "plain_text", "text": "View Trace", "emoji": true }, "url": "https://app.example.com/traces/trace_g0116", "action_id": "view_trace" },
+            { "type": "button", "text": { "type": "plain_text", "text": "Retry run", "emoji": true }, "style": "primary", "action_id": "retry_run" },
+            { "type": "button", "text": { "type": "plain_text", "text": "Mute this alert", "emoji": true }, "style": "danger", "action_id": "mute_alert" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "msg_investigating_01",
+      "scenario": "Bot acknowledges and starts investigating, posted as a threaded reply.",
+      "channel": "#llm-ops",
+      "postedAt": "2026-06-13T22:43:32.000Z",
+      "traceId": "trace_g0116",
+      "lifecycle": "investigating",
+      "blocks": [
+        {
+          "type": "context",
+          "elements": [
+            { "type": "image", "image_url": "https://example.com/bot.png", "alt_text": "bot" },
+            { "type": "mrkdwn", "text": ":eyes: *Investigating* — I'll reply here when I have a root cause." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "msg_triage_01",
+      "scenario": "Investigation finished with a root cause and a proposed fix. The richest card — long body, a code/log block, a 2-col field section, and a full action row with a select.",
+      "channel": "#llm-ops",
+      "postedAt": "2026-06-13T22:46:03.000Z",
+      "traceId": "trace_g0116",
+      "lifecycle": "triage",
+      "blocks": [
+        {
+          "type": "header",
+          "text": { "type": "plain_text", "text": ":mag: Triage: customer_support_agent tool failure", "emoji": true }
+        },
+        {
+          "type": "context",
+          "elements": [{ "type": "mrkdwn", "text": "*Status:* Awaiting review  ·  opened by <https://app.example.com|NeoSigma Bot>" }]
+        },
+        {
+          "type": "section",
+          "text": { "type": "mrkdwn", "text": "*Root cause*\nThe agent calls the `lookup_order` tool, which reaches the orders service over HTTP. The service refused the connection (`ToolException: connection refused`) and the agent has no retry or fallback, so the run aborts. ~13% of `customer_support_agent` runs in the last hour hit the same path." }
+        },
+        {
+          "type": "section",
+          "fields": [
+            { "type": "mrkdwn", "text": "*Repository:*\n`acme/support-bot`" },
+            { "type": "mrkdwn", "text": "*Branch:*\n`fix/lookup-order-retry`" },
+            { "type": "mrkdwn", "text": "*Failing span:*\n`lookup_order` (tool)" },
+            { "type": "mrkdwn", "text": "*Affected runs:*\n31 in last 60m" }
+          ]
+        },
+        {
+          "type": "section",
+          "text": { "type": "mrkdwn", "text": "*Proposed fix*\n```python\n# retry the orders lookup on transient connection failures\n@retry(wait=wait_exponential(min=1, max=8), stop=stop_after_attempt(3))\ndef lookup_order(user_id):\n    return orders_client.get(user_id, timeout=5)\n```" }
+        },
+        { "type": "divider" },
+        {
+          "type": "actions",
+          "elements": [
+            { "type": "button", "text": { "type": "plain_text", "text": "View Trace", "emoji": true }, "url": "https://app.example.com/traces/trace_g0116", "action_id": "view_trace" },
+            { "type": "button", "text": { "type": "plain_text", "text": "Open PR #482", "emoji": true }, "url": "https://github.com/acme/support-bot/pull/482", "action_id": "view_pr" },
+            { "type": "button", "text": { "type": "plain_text", "text": "Approve & merge", "emoji": true }, "style": "primary", "action_id": "approve_merge" },
+            {
+              "type": "static_select",
+              "placeholder": { "type": "plain_text", "text": "Merge strategy", "emoji": true },
+              "action_id": "merge_strategy",
+              "options": [
+                { "text": { "type": "plain_text", "text": "Create a merge commit" }, "value": "merge" },
+                { "text": { "type": "plain_text", "text": "Squash and merge" }, "value": "squash" },
+                { "text": { "type": "plain_text", "text": "Rebase and merge" }, "value": "rebase" }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "context",
+          "elements": [{ "type": "mrkdwn", "text": "_Diff truncated to 40 lines · :clock3: investigated in 2m 37s_" }]
+        }
+      ]
+    },
+    {
+      "id": "msg_resolved_01",
+      "scenario": "A human merged the fix; the card collapses to a terminal resolved state.",
+      "channel": "#llm-ops",
+      "postedAt": "2026-06-13T22:48:41.000Z",
+      "traceId": "trace_g0116",
+      "lifecycle": "resolved",
+      "blocks": [
+        {
+          "type": "header",
+          "text": { "type": "plain_text", "text": ":white_check_mark: Resolved — customer_support_agent", "emoji": true }
+        },
+        {
+          "type": "context",
+          "elements": [{ "type": "mrkdwn", "text": "*Status:* Merged by <https://app.example.com/u/ritvik|@ritvik>  ·  :github: `acme/support-bot#482`" }]
+        },
+        {
+          "type": "section",
+          "text": { "type": "mrkdwn", "text": "Retry + timeout handling added to the `lookup_order` call. Error rate on this path dropped to *0%* over the last 12 minutes." }
+        },
+        {
+          "type": "actions",
+          "elements": [
+            { "type": "button", "text": { "type": "plain_text", "text": "View Trace", "emoji": true }, "url": "https://app.example.com/traces/trace_g0116", "action_id": "view_trace" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "msg_alert_02",
+      "scenario": "A different failure — a RAG run's generation step failed after retrieval succeeded. Shorter alert, no customer field.",
+      "channel": "#llm-ops",
+      "postedAt": "2026-06-13T20:20:40.000Z",
+      "traceId": "trace_g0220",
+      "lifecycle": "alert",
+      "blocks": [
+        {
+          "type": "header",
+          "text": { "type": "plain_text", "text": ":rotating_light: Trace failed — rag_doc_qa", "emoji": true }
+        },
+        {
+          "type": "section",
+          "text": { "type": "mrkdwn", "text": ":warning: Retrieval succeeded, but the final `ChatOpenAI` generation failed with `ToolException: connection refused`. The run produced no answer." }
+        },
+        {
+          "type": "section",
+          "fields": [
+            { "type": "mrkdwn", "text": "*Severity:*\n:large_orange_circle: Medium" },
+            { "type": "mrkdwn", "text": "*Environment:*\nproduction" }
+          ]
+        },
+        {
+          "type": "actions",
+          "elements": [
+            { "type": "button", "text": { "type": "plain_text", "text": "View Trace", "emoji": true }, "url": "https://app.example.com/traces/trace_g0220", "action_id": "view_trace" },
+            { "type": "button", "text": { "type": "plain_text", "text": "Retry run", "emoji": true }, "style": "primary", "action_id": "retry_run" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "msg_feedback_01",
+      "scenario": "Not a failure — a successful run got a thumbs-down with a comment. Tests rendering a card driven by feedback rather than an error, including a quoted user comment.",
+      "channel": "#quality",
+      "postedAt": "2026-06-13T22:30:00.000Z",
+      "traceId": "trace_g0125",
+      "lifecycle": "alert",
+      "blocks": [
+        {
+          "type": "header",
+          "text": { "type": "plain_text", "text": ":thumbsdown: Negative feedback — customer_support_agent", "emoji": true }
+        },
+        {
+          "type": "context",
+          "elements": [{ "type": "mrkdwn", "text": "Score *0.48*  ·  model `gpt-4o`  ·  #quality" }]
+        },
+        {
+          "type": "section",
+          "text": { "type": "mrkdwn", "text": "> Hallucinated a detail\n\nReviewer flagged the response as inaccurate. Worth checking grounding before this reaches customers." }
+        },
+        {
+          "type": "actions",
+          "elements": [
+            { "type": "button", "text": { "type": "plain_text", "text": "View Trace", "emoji": true }, "url": "https://app.example.com/traces/trace_g0125", "action_id": "view_trace" },
+            { "type": "button", "text": { "type": "plain_text", "text": "Add to eval set", "emoji": true }, "action_id": "add_to_evalset" }
+          ]
+        }
+      ]
+    }
+  ]
+}
