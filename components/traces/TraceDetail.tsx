@@ -4,6 +4,7 @@ import React, { useState } from "react"
 import Link from "next/link"
 import { Copy, Check, ExternalLink, ThumbsUp, ThumbsDown } from "lucide-react"
 import type { Trace } from "@/lib/types"
+import { hasSlackMessages } from "@/lib/data/slack-cards"
 import { SpanTree } from "@/components/traces/SpanTree"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
@@ -24,6 +25,7 @@ interface TraceDetailProps {
 
 export function TraceDetail({ trace }: TraceDetailProps) {
   const [idCopied, setIdCopied] = useState(false)
+  const hasAlerts = hasSlackMessages(trace.id)
 
   function copyId() {
     navigator.clipboard.writeText(trace.id)
@@ -76,7 +78,20 @@ export function TraceDetail({ trace }: TraceDetailProps) {
             </span>
 
             {/* Slack alert button */}
-            
+            {hasAlerts && (
+              <Link
+                href={`/slack?traceId=${trace.id}`}
+                className="flex items-center gap-1.5 rounded px-2 py-0.5 text-[11px] font-semibold transition-colors hover:opacity-80"
+                style={{
+                  background: "color-mix(in oklch, var(--status-warning) 14%, transparent)",
+                  color: "var(--status-warning)",
+                  border: "1px solid color-mix(in oklch, var(--status-warning) 30%, transparent)",
+                }}
+              >
+                <ExternalLink size={11} />
+                View Alert
+              </Link>
+            )}
           </div>
         </div>
 

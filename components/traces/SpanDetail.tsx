@@ -5,28 +5,101 @@ import { X, Copy, Check } from "lucide-react"
 import type { SpanNode } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
+function highlightLine(line: string): React.ReactNode {
+  // Match key: value rows
+  const keyMatch = line.match(/^(\s*)("([^"]+)"\s*:\s*)(.*)$/)
+  if (keyMatch) {
+    const [, indent, , keyName, valuePart] = keyMatch
+    let renderedValue: React.ReactNode = valuePart
+
+    const stringMatch = valuePart.match(/^(".*")([,\]}]*)$/)
+    if (stringMatch) {
+      const [, str, rest] = stringMatch
+      renderedValue = (
+        <>
+          <span className="json-string">{str}</span>
+          {rest}
+        </>
+      )
+    } else {
+      const numberMatch = valuePart.match(/^([-\d.]+)([,\]}]*)$/)
+      if (numberMatch) {
+        const [, num, rest] = numberMatch
+        renderedValue = (
+          <>
+            <span className="json-number">{num}</span>
+            {rest}
+          </>
+        )
+      } else {
+        const kwMatch = valuePart.match(/^(true|false|null)([,\]}]*)$/)
+        if (kwMatch) {
+          const [, kw, rest] = kwMatch
+          renderedValue = (
+            <>
+              <span className="json-keyword">{kw}</span>
+              {rest}
+            </>
+          )
+        }
+      }
+    }
+
+    return (
+      <>
+        {indent}
+        <span className="json-key">{keyName}</span>: {renderedValue}
+      </>
+    )
+  }
+
+  // Match standalone strings in arrays
+  const arrayStringMatch = line.match(/^(\s*)(".*")([,\]}]*)$/)
+  if (arrayStringMatch) {
+    const [, indent, str, rest] = arrayStringMatch
+    return (
+      <>
+        {indent}
+        <span className="json-string">{str}</span>
+        {rest}
+      </>
+    )
+  }
+
+  // Match standalone numbers in arrays
+  const arrayNumMatch = line.match(/^(\s*)([-\d.]+)([,\]}]*)$/)
+  if (arrayNumMatch) {
+    const [, indent, num, rest] = arrayNumMatch
+    return (
+      <>
+        {indent}
+        <span className="json-number">{num}</span>
+        {rest}
+      </>
+    )
+  }
+
+  // Match standalone keywords in arrays
+  const arrayKwMatch = line.match(/^(\s*)(true|false|null)([,\]}]*)$/)
+  if (arrayKwMatch) {
+    const [, indent, kw, rest] = arrayKwMatch
+    return (
+      <>
+        {indent}
+        <span className="json-keyword">{kw}</span>
+        {rest}
+      </>
+    )
+  }
+
+  return line
+}
+
 function formatJson(obj: unknown): React.ReactNode {
   const text = JSON.stringify(obj, null, 2)
-  // Simple syntax coloring via spans
-  const lines = text.split("\n").map((line, i) => {
-    // Keys
-    const colored = line.replace(
-      /"([^"]+)"(\s*:)/g,
-      '<span class="json-key">"$1"</span>$2'
-    ).replace(
-      /: ("([^"]*)")/g,
-      ': <span class="json-string">$1</span>'
-    ).replace(
-      /: (true|false|null)/g,
-      ': <span class="json-keyword">$1</span>'
-    ).replace(
-      /: (-?\d+\.?\d*)/g,
-      ': <span class="json-number">$1</span>'
-    )
-    return (
-      <div key={i} dangerouslySetInnerHTML={{ __html: colored }} />
-    )
-  })
+  const lines = text.split("\n").map((line, i) => (
+    <div key={i}>{highlightLine(line)}</div>
+  ))
   return <>{lines}</>
 }
 

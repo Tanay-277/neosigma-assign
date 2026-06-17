@@ -1,4 +1,4 @@
-import { Geist_Mono } from "next/font/google"
+import { Geist, Geist_Mono } from "next/font/google"
 import localFont from "next/font/local"
 import type { Metadata } from "next"
 

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef, useEffect } from "react"
+import React, { useRef, useEffect, useState } from "react"
 import * as d3 from "d3"
 import type { CostByModel } from "@/lib/types"
 
@@ -13,6 +13,8 @@ const MARGIN = { top: 12, right: 90, bottom: 32, left: 160 }
 export function CostByModelChart({ data }: CostByModelChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const [hovered, setHovered] = useState<CostByModel | null>(null)
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     const wrapper = wrapperRef.current
@@ -83,6 +85,38 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
       .attr("rx", 3)
       .attr("opacity", 0.82)
       .attr("width", 0)
+      .on("mouseenter", function (event, d) {
+        d3.select(this)
+          .transition()
+          .duration(120)
+          .attr("opacity", 1.0)
+          .attr("fill", "var(--accent)")
+
+        // Dim non-hovered bars
+        root
+          .selectAll(".bar")
+          .filter((barData) => barData !== d)
+          .transition()
+          .duration(120)
+          .attr("opacity", 0.35)
+
+        setHovered(d as CostByModel)
+        setTooltipPos({
+          x: xScale((d as CostByModel).totalCost) + MARGIN.left,
+          y: (yScale((d as CostByModel).model) ?? 0) + yScale.bandwidth() / 2 + MARGIN.top,
+        })
+      })
+      .on("mouseleave", function () {
+        // Reset all bars
+        root
+          .selectAll(".bar")
+          .transition()
+          .duration(120)
+          .attr("opacity", 0.82)
+          .attr("fill", "var(--chart-1)")
+
+        setHovered(null)
+      })
       .transition()
       .duration(500)
       .ease(d3.easeCubicOut)
@@ -149,8 +183,40 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
   }, [data])
 
   return (
-    <div ref={wrapperRef} className="w-full overflow-x-auto">
+    <div ref={wrapperRef} className="relative w-full overflow-x-auto">
       <svg ref={svgRef} style={{ overflow: "visible", width: "100%", display: "block" }} />
+      {hovered && (
+        <div
+          className="absolute z-50 pointer-events-none rounded-lg border border-[--border-subtle] p-2.5 shadow-xl backdrop-blur-md text-[11px] flex flex-col gap-1.5 transition-all duration-75 ease-out"
+          style={{
+            left: tooltipPos.x > (wrapperRef.current?.clientWidth ?? 480) * 0.65 ? tooltipPos.x - 175 : tooltipPos.x + 12,
+            top: tooltipPos.y,
+            transform: "translateY(-50%)",
+            background: "color-mix(in oklch, var(--surface-2) 90%, transparent)",
+            minWidth: "150px"
+          }}
+        >
+          <span className="font-semibold text-[--text-primary]" style={{ fontFamily: "var(--font-paper)" }}>
+            {hovered.model}
+          </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-[--text-tertiary]">Total cost</span>
+              <span className="font-mono font-medium text-[--accent]">${hovered.totalCost.toFixed(4)}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-[--text-tertiary]">Total traces</span>
+              <span className="font-mono font-medium text-[--text-secondary]">{hovered.traceCount}</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-[--text-tertiary]">Avg tokens</span>
+              <span className="font-mono font-medium text-[--text-secondary]">
+                {hovered.traceCount > 0 ? Math.round(hovered.totalTokens / hovered.traceCount).toLocaleString() : "0"}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

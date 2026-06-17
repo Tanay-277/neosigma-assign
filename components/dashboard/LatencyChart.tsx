@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef, useEffect } from "react"
+import React, { useRef, useEffect, useState } from "react"
 import * as d3 from "d3"
 import type { LatencyPoint } from "@/lib/types"
 
@@ -13,6 +13,8 @@ const MARGIN = { top: 20, right: 32, bottom: 44, left: 56 }
 export function LatencyChart({ data }: LatencyChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const [hovered, setHovered] = useState<LatencyPoint | null>(null)
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
     const wrapper = wrapperRef.current
@@ -168,6 +170,74 @@ export function LatencyChart({ data }: LatencyChartProps) {
       .attr("stroke", "var(--bg)")
       .attr("stroke-width", 1.5)
 
+    // Guide Line
+    const guideLine = root
+      .append("line")
+      .attr("stroke", "var(--border-subtle)")
+      .attr("stroke-width", 1)
+      .attr("stroke-dasharray", "3,3")
+      .attr("y1", 0)
+      .attr("y2", innerH)
+      .style("display", "none")
+
+    const p50Focus = root
+      .append("circle")
+      .attr("r", 5)
+      .attr("fill", "var(--chart-1)")
+      .attr("stroke", "var(--bg)")
+      .attr("stroke-width", 1.5)
+      .style("display", "none")
+
+    const p95Focus = root
+      .append("circle")
+      .attr("r", 5)
+      .attr("fill", "var(--chart-3)")
+      .attr("stroke", "var(--bg)")
+      .attr("stroke-width", 1.5)
+      .style("display", "none")
+
+    // Invisible mouse event listener overlay
+    root
+      .append("rect")
+      .attr("width", innerW)
+      .attr("height", innerH)
+      .attr("fill", "transparent")
+      .style("pointer-events", "all")
+      .style("cursor", "crosshair")
+      .on("mousemove", function (event) {
+        const [mx] = d3.pointer(event)
+        const xDate = xScale.invert(mx)
+        const bisect = d3.bisector((d: LatencyPoint) => new Date(d.bucket)).left
+        const idx = bisect(data, xDate, 1)
+        const d0 = data[idx - 1]
+        const d1 = data[idx]
+        let closest = d0
+        if (d0 && d1) {
+          closest =
+            xDate.getTime() - new Date(d0.bucket).getTime() >
+            new Date(d1.bucket).getTime() - xDate.getTime()
+              ? d1
+              : d0
+        }
+        if (closest) {
+          const cx = xScale(new Date(closest.bucket))
+          guideLine.attr("x1", cx).attr("x2", cx).style("display", null)
+          p50Focus.attr("cx", cx).attr("cy", yScale(closest.p50)).style("display", null)
+          p95Focus.attr("cx", cx).attr("cy", yScale(closest.p95)).style("display", null)
+
+          setHovered(closest)
+          setTooltipPos({
+            x: cx + MARGIN.left,
+            y: Math.min(yScale(closest.p50), yScale(closest.p95)) + MARGIN.top,
+          })
+        }
+      })
+      .on("mouseleave", function () {
+        guideLine.style("display", "none")
+        p50Focus.style("display", "none")
+        p95Focus.style("display", "none")
+        setHovered(null)
+      })
   }, [data])
 
   return (
@@ -185,8 +255,39 @@ export function LatencyChart({ data }: LatencyChartProps) {
           <span className="text-[11px]" style={{ color: "var(--text-tertiary)", fontFamily: "var(--font-paper)" }}>p95</span>
         </div>
       </div>
-      <div ref={wrapperRef} className="w-full">
+      <div ref={wrapperRef} className="relative w-full">
         <svg ref={svgRef} style={{ overflow: "visible", width: "100%" }} />
+        {hovered && (
+          <div
+            className="absolute z-50 pointer-events-none rounded-lg border border-[--border-subtle] p-2.5 shadow-xl backdrop-blur-md text-[11px] flex flex-col gap-1.5 transition-all duration-75 ease-out"
+            style={{
+              left: tooltipPos.x > (wrapperRef.current?.clientWidth ?? 480) * 0.6 ? tooltipPos.x - 170 : tooltipPos.x + 12,
+              top: tooltipPos.y - 32,
+              transform: "translateY(-50%)",
+              background: "color-mix(in oklch, var(--surface-2) 90%, transparent)",
+            }}
+          >
+            <span className="font-semibold text-[--text-secondary]" style={{ fontFamily: "var(--font-paper)" }}>
+              {new Date(hovered.bucket).toLocaleDateString()} {new Date(hovered.bucket).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between gap-4">
+                <span className="flex items-center gap-1.5 text-[--text-tertiary]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[--chart-1]" />
+                  p50
+                </span>
+                <span className="font-mono font-medium text-[--text-primary]">{hovered.p50.toFixed(0)}ms</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="flex items-center gap-1.5 text-[--text-tertiary]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[--chart-3]" />
+                  p95
+                </span>
+                <span className="font-mono font-medium text-[--text-primary]">{hovered.p95.toFixed(0)}ms</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
