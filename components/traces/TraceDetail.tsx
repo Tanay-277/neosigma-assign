@@ -9,6 +9,7 @@ import { SpanTree } from "@/components/traces/SpanTree"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 
+
 function formatDuration(ms?: number): string {
   if (ms === undefined) return "—"
   if (ms < 1000) return `${ms}ms`

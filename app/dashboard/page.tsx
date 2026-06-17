@@ -1,19 +1,21 @@
 import type { Metadata } from "next"
-import { allTraces } from "@/lib/data/traces"
-import { computeMetrics } from "@/lib/data/metrics"
-import { DashboardView } from "@/components/dashboard/DashboardView"
 
 export const metadata: Metadata = {
   title: "Dashboard",
   description: "LLM observability metrics — p50/p95 latency, cost by model, error rate, and token usage over time.",
 }
 
-export default function DashboardPage() {
-  // 14-day window covers the full mock dataset (2026-06-07 to 2026-06-14)
+export const dynamic = "force-dynamic"
+
+export default async function DashboardPage() {
+  const { allTraces } = await import("@/lib/data/traces")
+  const { computeMetrics } = await import("@/lib/data/metrics")
+  const { DashboardView } = await import("@/components/dashboard/DashboardView")
+
   const metrics = computeMetrics(allTraces, 14)
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden rounded-3xl">
       <DashboardView metrics={metrics} />
     </div>
   )

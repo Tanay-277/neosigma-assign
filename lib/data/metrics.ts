@@ -145,6 +145,17 @@ export function computeMetrics(
     }))
     .sort((a, b) => a.bucket.localeCompare(b.bucket))
 
+  // ── Cost over time ──────────────────────────────────────────────────────
+  const costByBucket = new Map<string, number>()
+  for (const trace of inWindow) {
+    const bucket = toBucket(trace.startTime, 6)
+    const existing = costByBucket.get(bucket) ?? 0
+    costByBucket.set(bucket, existing + (trace.totalCostUsd ?? 0))
+  }
+  const costOverTime = Array.from(costByBucket.entries())
+    .map(([bucket, cost]) => ({ bucket, cost: parseFloat(cost.toFixed(4)) }))
+    .sort((a, b) => a.bucket.localeCompare(b.bucket))
+
   return {
     totalTraces: inWindow.length,
     errorRate:
@@ -158,6 +169,7 @@ export function computeMetrics(
     p50LatencyMs: Math.round(percentile(latencies, 50)),
     p95LatencyMs: Math.round(percentile(latencies, 95)),
     totalCostUsd,
+    costOverTime,
     latencyOverTime,
     costByModel,
     errorRateOverTime,

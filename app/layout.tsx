@@ -46,7 +46,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       className={cn(
-        "antialiased dark",
+        "antialiased",
         generalSans.variable,
         paperMono.variable,
         geistMono.variable

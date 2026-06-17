@@ -8,12 +8,15 @@ interface CostByModelChartProps {
   data: CostByModel[]
 }
 
+const MODEL_COLORS = ["var(--type-llm)", "var(--type-tool)", "var(--type-chain)", "var(--type-retriever)", "var(--type-parser)", "var(--chart-5)", "var(--chart-3)"]
+
 const MARGIN = { top: 12, right: 90, bottom: 32, left: 160 }
 
 export function CostByModelChart({ data }: CostByModelChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
   const [hovered, setHovered] = useState<CostByModel | null>(null)
+  const [hoveredIdx, setHoveredIdx] = useState(-1)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
 
   useEffect(() => {
@@ -81,7 +84,7 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
       .attr("x", 0)
       .attr("y", (d) => yScale(d.model) ?? 0)
       .attr("height", yScale.bandwidth())
-      .attr("fill", "var(--chart-1)")
+      .attr("fill", (d, i) => MODEL_COLORS[i % MODEL_COLORS.length])
       .attr("rx", 3)
       .attr("opacity", 0.82)
       .attr("width", 0)
@@ -90,7 +93,7 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
           .transition()
           .duration(120)
           .attr("opacity", 1.0)
-          .attr("fill", "var(--accent)")
+          .attr("fill", (d, i) => MODEL_COLORS[i % MODEL_COLORS.length])
 
         // Dim non-hovered bars
         root
@@ -101,21 +104,22 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
           .attr("opacity", 0.35)
 
         setHovered(d as CostByModel)
+        setHoveredIdx(data.indexOf(d as CostByModel))
         setTooltipPos({
           x: xScale((d as CostByModel).totalCost) + MARGIN.left,
           y: (yScale((d as CostByModel).model) ?? 0) + yScale.bandwidth() / 2 + MARGIN.top,
         })
       })
       .on("mouseleave", function () {
-        // Reset all bars
         root
           .selectAll(".bar")
           .transition()
           .duration(120)
           .attr("opacity", 0.82)
-          .attr("fill", "var(--chart-1)")
+          .attr("fill", (d, i) => MODEL_COLORS[i % MODEL_COLORS.length])
 
         setHovered(null)
+        setHoveredIdx(-1)
       })
       .transition()
       .duration(500)
@@ -196,13 +200,14 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
             minWidth: "150px"
           }}
         >
-          <span className="font-semibold text-[--text-primary]" style={{ fontFamily: "var(--font-paper)" }}>
+          <span className="flex items-center gap-1.5 font-semibold text-[--text-primary]" style={{ fontFamily: "var(--font-paper)" }}>
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: MODEL_COLORS[hoveredIdx % MODEL_COLORS.length] }} />
             {hovered.model}
           </span>
           <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between gap-4">
               <span className="text-[--text-tertiary]">Total cost</span>
-              <span className="font-mono font-medium text-[--accent]">${hovered.totalCost.toFixed(4)}</span>
+              <span className="font-mono font-medium" style={{ color: "var(--accent)" }}>${hovered.totalCost.toFixed(4)}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
               <span className="text-[--text-tertiary]">Total traces</span>

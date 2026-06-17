@@ -190,4 +190,5 @@ export interface DashboardMetrics {
   costByModel: CostByModel[]
   errorRateOverTime: ErrorRatePoint[]
   tokenUsageOverTime: TokenPoint[]
+  costOverTime: { bucket: string; cost: number }[]
 }

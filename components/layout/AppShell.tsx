@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { ViewTransition } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
@@ -35,8 +35,8 @@ import { Kbd } from "@/components/ui/kbd"
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardCircleIcon },
-  { href: "/traces",    label: "Traces",    icon: GitBranchIcon },
-  { href: "/slack",     label: "Alerts",    icon: Message01Icon },
+  { href: "/traces", label: "Traces", icon: GitBranchIcon },
+  { href: "/slack", label: "Alerts", icon: Message01Icon },
 ] as const
 
 const ICON_SIZE = 22
@@ -55,8 +55,8 @@ function Brand() {
         <HugeiconsIcon
           icon={AbsoluteIcon}
           size={ICON_SIZE}
-          color="var(--text-primary)"
-          strokeWidth={1.5}
+          color="var(--accent)"
+          strokeWidth={1.8}
         />
       </div>
       <span
@@ -87,7 +87,7 @@ function NavItem({
         className={BTN_CLASS}
         isActive={active}
         tooltip={label}
-        render={<Link href={href} />}
+        render={<Link href={href} transitionTypes={["navigate"]} />}
       >
         <HugeiconsIcon
           icon={icon}
@@ -104,22 +104,30 @@ function NavItem({
 
 function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme()
+  const [mounted, setMounted] = React.useState(false)
+  React.useEffect(() => setMounted(true), [])
   const isDark = resolvedTheme === "dark"
 
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
         className={BTN_CLASS}
-        tooltip={isDark ? "Light mode" : "Dark mode"}
+        tooltip={mounted ? (isDark ? "Light mode" : "Dark mode") : "Toggle theme"}
         onClick={() => setTheme(isDark ? "light" : "dark")}
       >
-        <HugeiconsIcon
-          icon={isDark ? SunIcon : Moon01Icon}
-          size={ICON_SIZE}
-          color="var(--text-tertiary)"
-          strokeWidth={1.75}
-        />
-        <span className={`line-clamp-1 ${TXT_CLASS}`}>{isDark ? "Light mode" : "Dark mode"}</span>
+        {mounted ? (
+          <HugeiconsIcon
+            icon={isDark ? SunIcon : Moon01Icon}
+            size={ICON_SIZE}
+            color="var(--text-tertiary)"
+            strokeWidth={1.75}
+          />
+        ) : (
+          <div className="size-[22px]" />
+        )}
+        <span className={`line-clamp-1 ${TXT_CLASS}`}>
+          {mounted ? (isDark ? "Light mode" : "Dark mode") : "\u00A0"}
+        </span>
         <Kbd className="ml-auto">d</Kbd>
       </SidebarMenuButton>
     </SidebarMenuItem>
@@ -188,8 +196,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset style={{ background: "var(--bg)" }}>
-        {children}
+      <SidebarInset  className="bg-(--bg)/90">
+        <ViewTransition name="page">
+          {children}
+        </ViewTransition>
       </SidebarInset>
     </SidebarProvider>
   )

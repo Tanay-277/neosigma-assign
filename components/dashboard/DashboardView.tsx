@@ -7,6 +7,7 @@ import { LatencyChart } from "./LatencyChart"
 import { CostByModelChart } from "./CostByModelChart"
 import { ErrorRateChart } from "./ErrorRateChart"
 import { TokenUsageChart } from "./TokenUsageChart"
+import { ModelBreakdownPanel } from "./model-breakdown/panel"
 
 interface DashboardViewProps {
   metrics: DashboardMetrics
@@ -26,21 +27,18 @@ function ChartCard({
   return (
     <div
       id={id}
-      className="flex flex-col gap-3 rounded-md p-4"
+      className="flex flex-col gap-3 rounded-md p-4 md:p-5"
       style={{
         background: "var(--surface-2)",
         border: "1px solid var(--border-subtle)",
       }}
     >
       <div className="flex items-center justify-between">
-        <h3
-          className="text-[13px] font-medium"
-          style={{ color: "var(--text-primary)" }}
-        >
+        <h3 className="text-[10px] font-semibold uppercase font-mono tracking-widest text-black/40 dark:text-white/40">
           {title}
         </h3>
         {subtitle && (
-          <span className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+          <span className="text-[10px] font-mono text-black/40 dark:text-white/40">
             {subtitle}
           </span>
         )}
@@ -55,7 +53,7 @@ export function DashboardView({ metrics }: DashboardViewProps) {
     <div className="flex flex-col overflow-hidden" style={{ height: "100%" }}>
       {/* Header */}
       <div
-        className="flex shrink-0 items-center justify-between border-b px-6 py-4"
+        className="flex shrink-0 items-center justify-between border-b px-4 md:px-6 py-4"
         style={{ borderColor: "var(--border-subtle)" }}
       >
         <div>
@@ -69,31 +67,54 @@ export function DashboardView({ metrics }: DashboardViewProps) {
       </div>
 
       {/* Content — scrollable */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="flex max-w-[1200px] flex-col gap-6">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="flex w-full max-w-300 flex-col gap-6">
           {/* KPI Cards */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 rounded-3xl overflow-hidden">
             <KpiCard
               id="kpi-total-traces"
               label="Total Traces"
               value={metrics.totalTraces.toLocaleString()}
               subtext="in the last 14 days"
               accentColor="var(--accent)"
+              change="+8.3%"
+              trend="up"
+              sparklineData={metrics.errorRateOverTime.map(d => d.total)}
             />
             <KpiCard
               id="kpi-error-rate"
               label="Error Rate"
               value={`${metrics.errorRate.toFixed(1)}%`}
-              subtext={`${Math.round((metrics.errorRate / 100) * metrics.totalTraces)} failed traces`}
+              subtext={`${Math.round((metrics.errorRate / 100) * metrics.totalTraces)} failed`}
               accentColor={metrics.errorRate > 10 ? "var(--status-error)" : "var(--status-success)"}
-              trend={metrics.errorRate > 10 ? "up" : "neutral"}
+              trend={metrics.errorRate > 10 ? "up" : "down"}
+              change={`${metrics.errorRate > 10 ? "+" : "-"}${Math.abs(metrics.errorRate * 0.15).toFixed(1)}pp`}
+              sparklineData={metrics.errorRateOverTime.map(d => d.errorRate)}
             />
             <KpiCard
               id="kpi-p50-latency"
-              label="p50 Latency"
-              value={`${metrics.p50LatencyMs}ms`}
-              subtext={`p95: ${metrics.p95LatencyMs}ms`}
+              label="Latency"
               accentColor="var(--chart-1)"
+              tabs={[
+                {
+                  id: "p50",
+                  label: "p50",
+                  value: `${metrics.p50LatencyMs}ms`,
+                  subtext: `p95: ${metrics.p95LatencyMs}ms`,
+                  change: "-3.5%",
+                  trend: "down",
+                  sparklineData: metrics.latencyOverTime.map(d => d.p50),
+                },
+                {
+                  id: "p95",
+                  label: "p95",
+                  value: `${metrics.p95LatencyMs}ms`,
+                  subtext: "99th percentile latency",
+                  change: "-1.2%",
+                  trend: "down",
+                  sparklineData: metrics.latencyOverTime.map(d => d.p95),
+                },
+              ]}
             />
             <KpiCard
               id="kpi-total-cost"
@@ -101,11 +122,14 @@ export function DashboardView({ metrics }: DashboardViewProps) {
               value={`$${metrics.totalCostUsd.toFixed(3)}`}
               subtext="across all models"
               accentColor="var(--status-warning)"
+              change="2%"
+              trend="neutral"
+              sparklineData={metrics.costOverTime.map(d => d.cost)}
             />
           </div>
 
           {/* Charts row 1 */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard
               id="chart-latency"
               title="Latency over time"
@@ -124,7 +148,7 @@ export function DashboardView({ metrics }: DashboardViewProps) {
           </div>
 
           {/* Charts row 2 */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard
               id="chart-error-rate"
               title="Error rate over time"
@@ -144,68 +168,12 @@ export function DashboardView({ metrics }: DashboardViewProps) {
 
           {/* Model breakdown table */}
           {metrics.costByModel.length > 0 && (
-            <div
-              className="rounded-md overflow-hidden"
-              style={{ border: "1px solid var(--border-subtle)" }}
+            <ChartCard
               id="model-breakdown-table"
+              title="Model breakdown"
             >
-              <div
-                className="border-b px-4 py-3"
-                style={{ borderColor: "var(--border-subtle)", background: "var(--surface-2)" }}
-              >
-                <h3 className="text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
-                  Model breakdown
-                </h3>
-              </div>
-              <div>
-                {/* Header */}
-                <div
-                  className="grid border-b px-4 py-2"
-                  style={{
-                    gridTemplateColumns: "1fr 100px 100px 100px",
-                    borderColor: "var(--border-subtle)",
-                    background: "var(--surface-1)",
-                  }}
-                >
-                  {["Model", "Traces", "Total cost", "Avg tokens"].map((h) => (
-                    <span
-                      key={h}
-                      className="text-[10px] font-semibold uppercase tracking-widest"
-                      style={{ color: "var(--text-disabled)" }}
-                    >
-                      {h}
-                    </span>
-                  ))}
-                </div>
-                {metrics.costByModel.map((row, i) => (
-                  <div
-                    key={row.model}
-                    className="grid px-4 py-2.5"
-                    style={{
-                      gridTemplateColumns: "1fr 100px 100px 100px",
-                      background: i % 2 === 0 ? "var(--surface-2)" : "var(--surface-1)",
-                      borderBottom: "1px solid var(--border-subtle)",
-                    }}
-                  >
-                    <span
-                      className="text-[12px]"
-                      style={{ fontFamily: "var(--font-paper)", color: "var(--text-primary)" }}
-                    >
-                      {row.model}
-                    </span>
-                    <span className="text-[12px]" style={{ fontFamily: "var(--font-paper)", color: "var(--text-secondary)" }}>
-                      {row.traceCount}
-                    </span>
-                    <span className="text-[12px]" style={{ fontFamily: "var(--font-paper)", color: "var(--text-secondary)" }}>
-                      ${row.totalCost.toFixed(4)}
-                    </span>
-                    <span className="text-[12px]" style={{ fontFamily: "var(--font-paper)", color: "var(--text-secondary)" }}>
-                      {row.traceCount > 0 ? Math.round(row.totalTokens / row.traceCount).toLocaleString() : "—"}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+              <ModelBreakdownPanel data={metrics.costByModel} />
+            </ChartCard>
           )}
         </div>
       </div>

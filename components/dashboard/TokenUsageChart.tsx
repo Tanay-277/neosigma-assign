@@ -19,6 +19,7 @@ function formatTokens(n: number): string {
 export function TokenUsageChart({ data }: TokenUsageChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const uid = React.useId()
   const [hovered, setHovered] = useState<TokenPoint | null>(null)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
 
@@ -34,6 +35,14 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
 
     d3.select(svg).selectAll("*").remove()
     d3.select(svg).attr("width", width).attr("height", height)
+
+    // Gradient defs
+    const defs = d3.select(svg).append("defs")
+    ;["total", "prompt"].forEach((key) => {
+      const g = defs.append("linearGradient").attr("id", `token-area-${uid}-${key}`).attr("x1", "0").attr("y1", "0").attr("x2", "0").attr("y2", "1")
+      g.append("stop").attr("offset", "0%").attr("stop-color", `var(--chart-${key === "total" ? 1 : 2})`).attr("stop-opacity", 0.2)
+      g.append("stop").attr("offset", "100%").attr("stop-color", `var(--chart-${key === "total" ? 1 : 2})`).attr("stop-opacity", 0.03)
+    })
 
     const root = d3
       .select(svg)
@@ -68,24 +77,24 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
       .attr("stroke", "var(--border-subtle)").attr("stroke-opacity", 0.4)
       .attr("stroke-dasharray", "2,4")
 
-    // Stacked area — prompt
-    const areaPrompt = d3.area<typeof stacked[0]>()
+    // Total area (prompt + completion)
+    const areaTotal = d3.area<typeof stacked[0]>()
       .x((d) => xScale(new Date(d.bucket)))
       .y0(innerH).y1((d) => yScale(d.total)).curve(d3.curveMonotoneX)
 
     root.append("path").datum(stacked)
-      .attr("fill", "var(--chart-1)").attr("fill-opacity", 0.18)
-      .attr("d", areaPrompt)
+      .attr("fill", `url(#token-area-${uid}-total)`)
+      .attr("d", areaTotal)
 
-    // Stacked area — completion
-    const areaCompl = d3.area<typeof stacked[0]>()
+    // Prompt area
+    const areaPrompt = d3.area<typeof stacked[0]>()
       .x((d) => xScale(new Date(d.bucket)))
       .y0((d) => yScale(d.total))
       .y1((d) => yScale(d.promptTokens)).curve(d3.curveMonotoneX)
 
     root.append("path").datum(stacked)
-      .attr("fill", "var(--chart-2)").attr("fill-opacity", 0.25)
-      .attr("d", areaCompl)
+      .attr("fill", `url(#token-area-${uid}-prompt)`)
+      .attr("d", areaPrompt)
 
     // Lines
     const lineTotal = d3.line<typeof stacked[0]>()
@@ -194,11 +203,11 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
       <div className="mb-3 flex items-center gap-4">
         <div className="flex items-center gap-1.5">
           <div className="h-2 w-2 rounded-sm" style={{ background: "var(--chart-1)", opacity: 0.9 }} />
-          <span className="text-[11px]" style={{ color: "var(--text-tertiary)", fontFamily: "var(--font-paper)" }}>Total</span>
+          <span className="text-[11px] text-black/40 dark:text-white/40">Total</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="h-2 w-2 rounded-sm" style={{ background: "var(--chart-2)", opacity: 0.9 }} />
-          <span className="text-[11px]" style={{ color: "var(--text-tertiary)", fontFamily: "var(--font-paper)" }}>Prompt</span>
+          <span className="text-[11px] text-black/40 dark:text-white/40">Prompt</span>
         </div>
       </div>
       <div ref={wrapperRef} className="relative w-full">

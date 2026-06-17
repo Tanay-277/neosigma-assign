@@ -13,6 +13,7 @@ const MARGIN = { top: 16, right: 24, bottom: 44, left: 48 }
 export function ErrorRateChart({ data }: ErrorRateChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const uid = React.useId()
   const [hovered, setHovered] = useState<ErrorRatePoint | null>(null)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
 
@@ -28,6 +29,12 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
 
     d3.select(svg).selectAll("*").remove()
     d3.select(svg).attr("width", width).attr("height", height)
+
+    // Gradient def
+    const defs = d3.select(svg).append("defs")
+    const grad = defs.append("linearGradient").attr("id", `error-area-${uid}`).attr("x1", "0").attr("y1", "0").attr("x2", "0").attr("y2", "1")
+    grad.append("stop").attr("offset", "0%").attr("stop-color", "var(--status-error)").attr("stop-opacity", 0.15)
+    grad.append("stop").attr("offset", "100%").attr("stop-color", "var(--status-error)").attr("stop-opacity", 0.02)
 
     const root = d3
       .select(svg)
@@ -77,8 +84,7 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
     root
       .append("path")
       .datum(data)
-      .attr("fill", "var(--status-error)")
-      .attr("fill-opacity", 0.12)
+      .attr("fill", `url(#error-area-${uid})`)
       .attr("d", area)
 
     // Line

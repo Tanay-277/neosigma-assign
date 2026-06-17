@@ -1,7 +1,4 @@
-import { Suspense } from "react"
 import type { Metadata } from "next"
-import { getAllIncidentGroups } from "@/lib/data/slack-cards"
-import { SlackView } from "@/components/slack/SlackView"
 
 export const metadata: Metadata = {
   title: "Alerts",
@@ -12,15 +9,18 @@ interface Props {
   searchParams: Promise<{ traceId?: string }>
 }
 
+export const dynamic = "force-dynamic"
+
 export default async function SlackPage({ searchParams }: Props) {
   const { traceId } = await searchParams
+  const { getAllIncidentGroups } = await import("@/lib/data/slack-cards")
+  const { SlackView } = await import("@/components/slack/SlackView")
+
   const groups = getAllIncidentGroups()
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
-      <Suspense>
-        <SlackView groups={groups} initialTraceId={traceId} />
-      </Suspense>
+    <div className="flex h-full flex-col overflow-hidden ">
+      <SlackView groups={groups} initialTraceId={traceId} />
     </div>
   )
 }

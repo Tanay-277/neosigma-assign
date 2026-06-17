@@ -13,6 +13,7 @@ const MARGIN = { top: 20, right: 32, bottom: 44, left: 56 }
 export function LatencyChart({ data }: LatencyChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const uid = React.useId()
   const [hovered, setHovered] = useState<LatencyPoint | null>(null)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
 
@@ -27,6 +28,14 @@ export function LatencyChart({ data }: LatencyChartProps) {
     const innerH = height - MARGIN.top - MARGIN.bottom
 
     d3.select(svg).selectAll("*").remove()
+
+    // Gradient defs
+    const defs = d3.select(svg).append("defs")
+    ;["p50", "p95"].forEach((key) => {
+      const grad = defs.append("linearGradient").attr("id", `latency-area-${uid}-${key}`).attr("x1", "0").attr("y1", "0").attr("x2", "0").attr("y2", "1")
+      grad.append("stop").attr("offset", "0%").attr("stop-color", `var(--chart-${key === "p50" ? 1 : 3})`).attr("stop-opacity", 0.12)
+      grad.append("stop").attr("offset", "100%").attr("stop-color", `var(--chart-${key === "p50" ? 1 : 3})`).attr("stop-opacity", 0.02)
+    })
 
     const root = d3
       .select(svg)
@@ -103,6 +112,23 @@ export function LatencyChart({ data }: LatencyChartProps) {
       )
       .call((g) => g.selectAll(".tick line").attr("stroke", "transparent"))
 
+    // Area generators
+    const areaP50 = d3.area<LatencyPoint>()
+      .x((d) => xScale(new Date(d.bucket)))
+      .y0(innerH)
+      .y1((d) => yScale(d.p50))
+      .curve(d3.curveMonotoneX)
+
+    const areaP95 = d3.area<LatencyPoint>()
+      .x((d) => xScale(new Date(d.bucket)))
+      .y0(innerH)
+      .y1((d) => yScale(d.p95))
+      .curve(d3.curveMonotoneX)
+
+    // Area fills
+    root.append("path").datum(data).attr("fill", `url(#latency-area-${uid}-p50)`).attr("d", areaP50)
+    root.append("path").datum(data).attr("fill", `url(#latency-area-${uid}-p95)`).attr("d", areaP95)
+
     const lineP50 = d3
       .line<LatencyPoint>()
       .x((d) => xScale(new Date(d.bucket)))
@@ -144,7 +170,7 @@ export function LatencyChart({ data }: LatencyChartProps) {
       .ease(d3.easeCubicOut)
       .attr("opacity", 1)
 
-    // Dots p50
+    // Data dots — subtle, semi-transparent
     root
       .selectAll(".dot-p50")
       .data(data)
@@ -152,12 +178,10 @@ export function LatencyChart({ data }: LatencyChartProps) {
       .attr("class", "dot-p50")
       .attr("cx", (d) => xScale(new Date(d.bucket)))
       .attr("cy", (d) => yScale(d.p50))
-      .attr("r", 3)
+      .attr("r", 2)
       .attr("fill", "var(--chart-1)")
-      .attr("stroke", "var(--bg)")
-      .attr("stroke-width", 1.5)
+      .attr("opacity", 0.45)
 
-    // Dots p95
     root
       .selectAll(".dot-p95")
       .data(data)
@@ -165,10 +189,9 @@ export function LatencyChart({ data }: LatencyChartProps) {
       .attr("class", "dot-p95")
       .attr("cx", (d) => xScale(new Date(d.bucket)))
       .attr("cy", (d) => yScale(d.p95))
-      .attr("r", 3)
+      .attr("r", 2)
       .attr("fill", "var(--chart-3)")
-      .attr("stroke", "var(--bg)")
-      .attr("stroke-width", 1.5)
+      .attr("opacity", 0.35)
 
     // Guide Line
     const guideLine = root
@@ -246,13 +269,13 @@ export function LatencyChart({ data }: LatencyChartProps) {
       <div className="mb-3 flex items-center gap-4">
         <div className="flex items-center gap-1.5">
           <div className="h-0.5 w-5 rounded" style={{ background: "var(--chart-1)" }} />
-          <span className="text-[11px]" style={{ color: "var(--text-tertiary)", fontFamily: "var(--font-paper)" }}>p50</span>
+          <span className="text-[11px] text-black/40 dark:text-white/40">p50</span>
         </div>
         <div className="flex items-center gap-1.5">
           <svg width={20} height={2}>
             <line x1={0} y1={1} x2={20} y2={1} stroke="var(--chart-3)" strokeWidth={1.5} strokeDasharray="4,3" />
           </svg>
-          <span className="text-[11px]" style={{ color: "var(--text-tertiary)", fontFamily: "var(--font-paper)" }}>p95</span>
+          <span className="text-[11px] text-black/40 dark:text-white/40">p95</span>
         </div>
       </div>
       <div ref={wrapperRef} className="relative w-full">
