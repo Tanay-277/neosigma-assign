@@ -3,6 +3,7 @@ import localFont from "next/font/local"
 import type { Metadata } from "next"
 
 import "./globals.css"
+import { cookies } from "next/headers"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AppShell } from "@/components/layout/AppShell"
 import { TooltipProvider } from "@/components/ui/tooltip"
@@ -36,11 +37,14 @@ export const metadata: Metadata = {
     "Trace explorer, alert management, and metrics for LLM applications. Built for production debugging.",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const cookieStore = await cookies()
+  const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false"
+
   return (
     <html
       lang="en"
@@ -55,7 +59,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider defaultTheme="dark" attribute="class" enableSystem={false} disableTransitionOnChange>
           <TooltipProvider>
-            <AppShell>{children}</AppShell>
+            <AppShell defaultOpen={defaultOpen}>{children}</AppShell>
           </TooltipProvider>
         </ThemeProvider>
       </body>

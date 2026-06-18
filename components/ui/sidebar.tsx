@@ -77,6 +77,7 @@ function SidebarProvider({
   React.useEffect(() => {
     const match = document.cookie.match(new RegExp(`(^| )${SIDEBAR_COOKIE_NAME}=([^;]+)`))
     if (match) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       _setOpen(match[2] === "true")
     }
   }, [])

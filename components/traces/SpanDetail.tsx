@@ -167,11 +167,10 @@ export function SpanDetail({ span, onClose }: SpanDetailProps) {
 
   return (
     <div
-      className="animate-slide-up flex flex-col overflow-hidden border-t"
+      className="animate-slide-up flex flex-col overflow-hidden border-t h-[480px] md:h-[320px]"
       style={{
         borderColor: "var(--border-subtle)",
         background: "var(--surface-1)",
-        height: 320,
       }}
     >
       {/* Header */}
@@ -189,7 +188,7 @@ export function SpanDetail({ span, onClose }: SpanDetailProps) {
           {span.type}
         </span>
         <span
-          className="text-[13px] font-medium"
+          className="text-[13px] font-medium truncate max-w-[120px] sm:max-w-none"
           style={{ color: "var(--text-primary)" }}
         >
           {span.name}
@@ -208,7 +207,7 @@ export function SpanDetail({ span, onClose }: SpanDetailProps) {
         {/* ID copy */}
         <button
           onClick={copyId}
-          className="flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors hover:bg-[--surface-3]"
+          className="hidden sm:flex items-center gap-1 rounded px-1.5 py-0.5 transition-colors hover:bg-[--surface-3]"
           style={{ fontFamily: "var(--font-paper)", color: "var(--text-tertiary)", fontSize: 10 }}
         >
           {span.id}
@@ -225,10 +224,10 @@ export function SpanDetail({ span, onClose }: SpanDetailProps) {
       </div>
 
       {/* Content — scrollable */}
-      <div className="flex min-h-0 flex-1 gap-0 overflow-hidden">
+      <div className="flex flex-col md:flex-row min-h-0 flex-1 gap-0 overflow-y-auto md:overflow-hidden">
         {/* Metadata */}
         <div
-          className="flex w-52 shrink-0 flex-col gap-3 overflow-y-auto border-r p-4"
+          className="flex w-full md:w-52 shrink-0 flex-col gap-3 p-4 border-b md:border-b-0 md:border-r"
           style={{ borderColor: "var(--border-subtle)" }}
         >
           <Row label="Latency" value={span.latencyMs !== undefined ? `${span.latencyMs}ms` : span.status === "running" ? "in progress" : "—"} mono />
@@ -255,15 +254,15 @@ export function SpanDetail({ span, onClose }: SpanDetailProps) {
         </div>
 
         {/* Input / Output */}
-        <div className="flex min-w-0 flex-1 gap-px overflow-hidden">
-          <div className="flex min-w-0 flex-1 flex-col overflow-y-auto p-4">
+        <div className="flex flex-col md:flex-row min-w-0 flex-1 overflow-visible md:overflow-hidden">
+          <div className="flex min-w-0 flex-1 flex-col p-4 border-b md:border-b-0" style={{ borderColor: "var(--border-subtle)" }}>
             <JsonViewer data={span.input} label="Input" />
           </div>
           <div
-            className="w-px shrink-0"
+            className="hidden md:block w-px shrink-0"
             style={{ background: "var(--border-subtle)" }}
           />
-          <div className="flex min-w-0 flex-1 flex-col overflow-y-auto p-4">
+          <div className="flex min-w-0 flex-1 flex-col p-4">
             <JsonViewer
               data={span.output}
               label={span.status === "running" ? "Output (streaming…)" : "Output"}

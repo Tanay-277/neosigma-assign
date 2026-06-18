@@ -21,15 +21,31 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const uid = React.useId()
   const [hovered, setHovered] = useState<TokenPoint | null>(null)
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0, isRightAlign: false })
+
+  const [dimensions, setDimensions] = useState({ width: 0, height: 220 })
 
   useEffect(() => {
     const wrapper = wrapperRef.current
-    const svg = svgRef.current
-    if (!svg || !wrapper) return
+    if (!wrapper) return
 
-    const width = wrapper.clientWidth || 480
-    const height = 220
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width } = entry.contentRect
+        const height = wrapper.clientHeight || 220
+        setDimensions({ width, height })
+      }
+    })
+
+    resizeObserver.observe(wrapper)
+    return () => resizeObserver.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg || dimensions.width === 0) return
+
+    const { width, height } = dimensions
     const innerW = width - MARGIN.left - MARGIN.right
     const innerH = height - MARGIN.top - MARGIN.bottom
 
@@ -55,6 +71,7 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
         .attr("x", innerW / 2).attr("y", innerH / 2)
         .attr("text-anchor", "middle")
         .attr("fill", "var(--text-tertiary)").attr("font-size", 12)
+        .attr("font-family", "var(--font-paper)")
         .text("No token data in this window")
       return
     }
@@ -85,6 +102,11 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
     root.append("path").datum(stacked)
       .attr("fill", `url(#token-area-${uid}-total)`)
       .attr("d", areaTotal)
+      .attr("opacity", 0)
+      .transition()
+      .duration(600)
+      .ease(d3.easeCubicOut)
+      .attr("opacity", 1)
 
     // Prompt area
     const areaPrompt = d3.area<typeof stacked[0]>()
@@ -95,25 +117,82 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
     root.append("path").datum(stacked)
       .attr("fill", `url(#token-area-${uid}-prompt)`)
       .attr("d", areaPrompt)
+      .attr("opacity", 0)
+      .transition()
+      .duration(600)
+      .ease(d3.easeCubicOut)
+      .attr("opacity", 1)
 
     // Lines
     const lineTotal = d3.line<typeof stacked[0]>()
       .x((d) => xScale(new Date(d.bucket))).y((d) => yScale(d.total))
       .curve(d3.curveMonotoneX)
 
-    root.append("path").datum(stacked)
-      .attr("fill", "none").attr("stroke", "var(--chart-1)")
-      .attr("stroke-width", 1.5).attr("d", lineTotal)
-      .attr("opacity", 0).transition().duration(500).ease(d3.easeCubicOut).attr("opacity", 0.9)
-
     const linePrompt = d3.line<typeof stacked[0]>()
       .x((d) => xScale(new Date(d.bucket))).y((d) => yScale(d.promptTokens))
       .curve(d3.curveMonotoneX)
 
-    root.append("path").datum(stacked)
-      .attr("fill", "none").attr("stroke", "var(--chart-2)")
-      .attr("stroke-width", 1.25).attr("stroke-dasharray", "4,3").attr("d", linePrompt)
-      .attr("opacity", 0).transition().duration(500).ease(d3.easeCubicOut).attr("opacity", 0.7)
+    function animateLine(
+      path: d3.Selection<SVGPathElement, unknown, null, undefined>,
+      onEnd?: (this: SVGPathElement) => void
+    ) {
+      const node = path.node()
+      if (!node) return
+      const len = node.getTotalLength()
+      const t = path
+        .attr("stroke-dasharray", len)
+        .attr("stroke-dashoffset", len)
+        .transition()
+        .duration(600)
+        .ease(d3.easeCubicOut)
+        .attr("stroke-dashoffset", 0)
+
+      if (onEnd) {
+        t.on("end", onEnd)
+      }
+    }
+
+    const pathTotal = root.append("path").datum(stacked)
+      .attr("fill", "none")
+      .attr("stroke", "var(--chart-1)")
+      .attr("stroke-width", 1.5)
+      .attr("d", lineTotal) as d3.Selection<SVGPathElement, unknown, null, undefined>
+
+    animateLine(pathTotal)
+
+    const pathPrompt = root.append("path").datum(stacked)
+      .attr("fill", "none")
+      .attr("stroke", "var(--chart-2)")
+      .attr("stroke-width", 1.25)
+      .attr("d", linePrompt) as d3.Selection<SVGPathElement, unknown, null, undefined>
+
+    animateLine(pathPrompt, function (this: SVGPathElement) {
+      d3.select(this).attr("stroke-dasharray", "4,3")
+    })
+
+    // Data dots — fade in after lines complete
+    const addDots = (
+      cls: string,
+      yAcc: (d: typeof stacked[0]) => number,
+      color: string,
+      finalOpacity: number
+    ) =>
+      root.selectAll(`.${cls}`)
+        .data(stacked)
+        .join("circle")
+        .attr("class", cls)
+        .attr("cx", (d) => xScale(new Date(d.bucket)))
+        .attr("cy", (d) => yAcc(d))
+        .attr("r", 2)
+        .attr("fill", color)
+        .attr("opacity", 0)
+        .transition()
+        .delay(400)
+        .duration(300)
+        .attr("opacity", finalOpacity)
+
+    addDots("dot-total", (d) => yScale(d.total), "var(--chart-1)", 0.45)
+    addDots("dot-prompt", (d) => yScale(d.promptTokens), "var(--chart-2)", 0.35)
 
     // Axes
     root.append("g").attr("transform", `translate(0,${innerH})`)
@@ -126,6 +205,8 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
       .call(d3.axisLeft(yScale).ticks(4).tickFormat((d) => formatTokens(d as number)))
       .call((g) => g.select(".domain").remove())
       .call((g) => g.selectAll("text").attr("fill", "var(--text-tertiary)").attr("font-size", 10).attr("font-family", "var(--font-paper)"))
+      .call((g) => g.selectAll(".tick line").attr("stroke", "transparent"))
+
     // Guide Line
     const guideLine = root
       .append("line")
@@ -140,7 +221,7 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
       .append("circle")
       .attr("r", 5)
       .attr("fill", "var(--chart-1)")
-      .attr("stroke", "var(--bg)")
+      .attr("stroke", "var(--surface-2)")
       .attr("stroke-width", 1.5)
       .style("display", "none")
 
@@ -148,7 +229,7 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
       .append("circle")
       .attr("r", 5)
       .attr("fill", "var(--chart-2)")
-      .attr("stroke", "var(--bg)")
+      .attr("stroke", "var(--surface-2)")
       .attr("stroke-width", 1.5)
       .style("display", "none")
 
@@ -184,9 +265,11 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
           promptFocus.attr("cx", cx).attr("cy", yScale(closest.promptTokens)).style("display", null)
 
           setHovered(closest)
+          const tx = cx + MARGIN.left
           setTooltipPos({
-            x: cx + MARGIN.left,
+            x: tx,
             y: Math.min(yScale(totalVal), yScale(closest.promptTokens)) + MARGIN.top,
+            isRightAlign: tx > width * 0.6,
           })
         }
       })
@@ -196,64 +279,53 @@ export function TokenUsageChart({ data }: TokenUsageChartProps) {
         promptFocus.style("display", "none")
         setHovered(null)
       })
-  }, [data])
+  }, [data, dimensions])
 
   return (
-    <div>
-      <div className="mb-3 flex items-center gap-4">
-        <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-sm" style={{ background: "var(--chart-1)", opacity: 0.9 }} />
-          <span className="text-[11px] text-black/40 dark:text-white/40">Total</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-sm" style={{ background: "var(--chart-2)", opacity: 0.9 }} />
-          <span className="text-[11px] text-black/40 dark:text-white/40">Prompt</span>
-        </div>
-      </div>
-      <div ref={wrapperRef} className="relative w-full">
-        <svg ref={svgRef} style={{ overflow: "visible", width: "100%", display: "block" }} />
-        {hovered && (
-          <div
-            className="absolute z-50 pointer-events-none rounded-lg border border-[--border-subtle] p-2.5 shadow-xl backdrop-blur-md text-[11px] flex flex-col gap-1.5 transition-all duration-75 ease-out"
-            style={{
-              left: tooltipPos.x > (wrapperRef.current?.clientWidth ?? 480) * 0.6 ? tooltipPos.x - 170 : tooltipPos.x + 12,
-              top: tooltipPos.y - 32,
-              transform: "translateY(-50%)",
-              background: "color-mix(in oklch, var(--surface-2) 90%, transparent)",
-            }}
-          >
-            <span className="font-semibold text-[--text-secondary]" style={{ fontFamily: "var(--font-paper)" }}>
-              {new Date(hovered.bucket).toLocaleDateString()} {new Date(hovered.bucket).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between gap-4">
-                <span className="flex items-center gap-1.5 text-[--text-tertiary]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[--chart-1]" />
-                  Total tokens
-                </span>
-                <span className="font-mono font-medium text-[--text-primary]">
-                  {(hovered.promptTokens + hovered.completionTokens).toLocaleString()}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="flex items-center gap-1.5 text-[--text-tertiary]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[--chart-2]" />
-                  Prompt
-                </span>
-                <span className="font-mono font-medium text-[--text-secondary]">
-                  {hovered.promptTokens.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-[--text-tertiary] pl-3">Completion</span>
-                <span className="font-mono font-medium text-[--text-secondary]">
-                  {hovered.completionTokens.toLocaleString()}
-                </span>
-              </div>
+    <div ref={wrapperRef} className="relative w-full h-[200px] sm:h-[220px]">
+      <svg ref={svgRef} style={{ overflow: "visible", width: "100%", display: "block" }} />
+      {hovered && (
+        <div
+          className="absolute z-50 pointer-events-none rounded-lg p-2.5 text-[11px] flex flex-col gap-1.5 transition-all duration-75 ease-out"
+          style={{
+            left: tooltipPos.isRightAlign ? tooltipPos.x - 170 : tooltipPos.x + 12,
+            top: tooltipPos.y - 32,
+            transform: "translateY(-50%)",
+            background: "var(--surface-2)",
+            boxShadow: "0 4px 24px oklch(0 0 0 / 0.16), 0 1px 6px oklch(0 0 0 / 0.10)",
+          }}
+        >
+          <span className="font-semibold text-[--text-secondary]" style={{ fontFamily: "var(--font-paper)" }}>
+            {new Date(hovered.bucket).toLocaleDateString()} {new Date(hovered.bucket).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1.5 text-[--text-tertiary]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[--chart-1]" />
+                Total tokens
+              </span>
+              <span className="font-mono font-medium text-[--text-primary]">
+                {(hovered.promptTokens + hovered.completionTokens).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1.5 text-[--text-tertiary]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[--chart-2]" />
+                Prompt
+              </span>
+              <span className="font-mono font-medium text-[--text-secondary]">
+                {hovered.promptTokens.toLocaleString()}
+              </span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-[--text-tertiary] pl-3">Completion</span>
+              <span className="font-mono font-medium text-[--text-secondary]">
+                {hovered.completionTokens.toLocaleString()}
+              </span>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

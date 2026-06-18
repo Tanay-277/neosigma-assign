@@ -121,7 +121,7 @@ export function DonutChart({
         d3.select(this)
           .transition()
           .duration(150)
-          .attr("d", arcGenHover(d as any))
+          .attr("d", arcGenHover(d))
           .attr("stroke", "var(--surface-2)")
           .attr("stroke-width", "1.5")
 
@@ -149,7 +149,7 @@ export function DonutChart({
         d3.select(this)
           .transition()
           .duration(150)
-          .attr("d", (d: any) => arcGen(d))
+          .attr("d", (d) => arcGen(d as d3.PieArcDatum<DonutSegment>))
           .attr("stroke", "none")
         setTooltip(null)
       })

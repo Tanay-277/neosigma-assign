@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useMemo } from "react"
-import type { Trace, SpanNode } from "@/lib/types"
+import type { Trace } from "@/lib/types"
 import { buildSpanTree, flattenSpanTree } from "@/lib/data/traces"
 import { SpanNodeRow } from "@/components/traces/SpanNode"
 import { SpanDetail } from "@/components/traces/SpanDetail"

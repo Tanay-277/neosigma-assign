@@ -19,7 +19,7 @@ export default async function SlackPage({ searchParams }: Props) {
   const groups = getAllIncidentGroups()
 
   return (
-    <div className="flex h-full flex-col overflow-hidden ">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl">
       <SlackView groups={groups} initialTraceId={traceId} />
     </div>
   )

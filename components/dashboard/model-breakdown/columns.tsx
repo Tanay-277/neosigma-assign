@@ -1,6 +1,6 @@
 "use client"
 
-import type { ColumnDef } from "@tanstack/react-table"
+import type { ColumnDef, Column } from "@tanstack/react-table"
 import type { CostByModel } from "@/lib/types"
 import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -23,7 +23,7 @@ function SortHeader({
   label,
   align = "left",
 }: {
-  column: any
+  column: Column<CostByModel, unknown>
   label: string
   align?: "left" | "right"
 }) {

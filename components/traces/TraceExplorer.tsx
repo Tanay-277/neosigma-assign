@@ -61,7 +61,9 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
     <div className="flex h-full overflow-hidden">
       {/* ── Left panel: list ── */}
       <div
-        className="flex w-[380px] shrink-0 flex-col border-r"
+        className={`w-full md:w-[380px] shrink-0 flex flex-col border-r ${
+          selectedId ? "hidden md:flex" : "flex"
+        }`}
         style={{
           borderColor: "var(--border-subtle)",
           background: "var(--bg)",
@@ -73,7 +75,7 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
           style={{ borderColor: "var(--border-subtle)" }}
         >
           {/* Page title */}
-          <div className="mb-2.5 flex items-center gap-2">
+          <div className="mb-2.5 flex items-center gap-2 pl-11 sm:pl-0">
             <GitBranch size={14} style={{ color: "var(--text-tertiary)" }} />
             <h1 className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
               Traces
@@ -165,7 +167,7 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
           <span className="w-14 text-right text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-disabled)" }}>
             Latency
           </span>
-          <span className="w-14 text-right text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-disabled)" }}>
+          <span className="w-14 text-right text-[10px] font-semibold uppercase tracking-widest hidden sm:inline" style={{ color: "var(--text-disabled)" }}>
             Cost
           </span>
           <span className="w-12 text-right text-[10px] font-semibold uppercase tracking-widest" style={{ color: "var(--text-disabled)" }}>
@@ -209,7 +211,11 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
       </div>
 
       {/* ── Right panel: detail ── */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div
+        className={`min-w-0 flex-1 flex-col overflow-hidden ${
+          selectedId ? "flex" : "hidden md:flex"
+        }`}
+      >
         {selectedTrace ? (
           <TraceDetail trace={selectedTrace} />
         ) : (

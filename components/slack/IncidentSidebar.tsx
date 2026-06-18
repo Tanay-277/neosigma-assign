@@ -43,7 +43,7 @@ export function IncidentSidebar({
     return (
       <div
         className="flex h-32 items-center justify-center text-sm"
-        style={{ color: "var(--text-tertiary)" }}
+        style={{ color: "var(--text-tertiary)", fontFamily: "var(--font-paper)" }}
       >
         No incidents
       </div>
@@ -51,48 +51,51 @@ export function IncidentSidebar({
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-2.5 p-3">
       {groups.map((group) => {
         const isActive = group.traceId === activeTraceId
         const lc = group.latestLifecycle
         const colors = LIFECYCLE_COLOR[lc]
         const latestMsg = group.messages[group.messages.length - 1]
+        const formattedChannel = group.channel.startsWith("#") ? group.channel : `#${group.channel}`
 
         return (
           <button
             key={group.traceId}
             onClick={() => onSelect(group.traceId)}
             className={cn(
-              "flex flex-col gap-1.5 border-b px-4 py-3 text-left transition-colors duration-75",
-              isActive ? "bg-[--accent-muted]" : "hover:bg-[--surface-3]"
+              "relative flex flex-col gap-2 rounded-2xl p-4 text-left transition-all duration-150 ease-out select-none cursor-pointer focus:outline-hidden border border-transparent",
+              isActive
+                ? "bg-[var(--surface-3)] shadow-xs"
+                : "bg-[var(--surface-2)] hover:bg-[var(--surface-3)]/60"
             )}
-            style={{ borderColor: "var(--border-subtle)" }}
           >
             {/* Top row: traceId + channel */}
             <div className="flex items-center justify-between gap-2">
               <span
-                className="truncate text-[11px]"
+                className="truncate text-[11px] font-semibold"
                 style={{
                   fontFamily: "var(--font-paper)",
-                  color: isActive ? "var(--accent)" : "var(--text-secondary)",
+                  color: "var(--text-primary)",
                 }}
               >
                 {group.traceId}
               </span>
               <span
-                className="shrink-0 text-[10px]"
-                style={{ color: "var(--text-disabled)", fontFamily: "var(--font-paper)" }}
+                className="shrink-0 text-[10px] font-mono opacity-80"
+                style={{ color: "var(--text-tertiary)", fontFamily: "var(--font-paper)" }}
               >
-                {group.channel}
+                {formattedChannel}
               </span>
             </div>
 
-            {/* Bottom row: lifecycle badge + time */}
+            {/* Bottom row: status pill + time */}
             <div className="flex items-center justify-between gap-2">
               <span
-                className="rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide"
+                className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5"
                 style={{ background: colors.bg, color: colors.text }}
               >
+                <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: colors.text }} />
                 {LIFECYCLE_LABEL[lc]}
               </span>
               {latestMsg && (

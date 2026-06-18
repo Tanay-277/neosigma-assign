@@ -20,7 +20,7 @@ function ChartCard({
   id,
 }: {
   title: string
-  subtitle?: string
+  subtitle?: string | React.ReactNode
   children: React.ReactNode
   id?: string
 }) {
@@ -32,14 +32,17 @@ function ChartCard({
         background: "var(--surface-2)",
       }}
     >
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold uppercase font-mono tracking-widest" style={{ color: "var(--text-tertiary)" }}>
+      {/* min-w-0 + gap-2 on the row: title gets min-w-0 so it can truncate
+          rather than pushing the subtitle off-screen at narrow card widths.
+          subtitle gets shrink-0 so it always shows at its natural size. */}
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <h3 className="min-w-0 truncate text-sm font-semibold uppercase font-mono tracking-widest" style={{ color: "var(--text-tertiary)" }}>
           {title}
         </h3>
         {subtitle && (
-          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
+          <div className="shrink-0 text-[10px] font-mono text-[--text-tertiary]">
             {subtitle}
-          </span>
+          </div>
         )}
       </div>
       {children}
@@ -52,7 +55,7 @@ export function DashboardView({ metrics }: DashboardViewProps) {
     <div className="flex flex-col overflow-hidden" style={{ height: "100%" }}>
       {/* Header */}
       <div
-        className="flex shrink-0 items-center justify-between border-b px-4 md:px-6 py-4"
+        className="flex shrink-0 items-center justify-between border-b pl-14 pr-4 sm:px-6 py-4"
         style={{ borderColor: "var(--border-subtle)" }}
       >
         <div>
@@ -132,7 +135,21 @@ export function DashboardView({ metrics }: DashboardViewProps) {
             <ChartCard
               id="chart-latency"
               title="Latency over time"
-              subtitle="p50 (solid) · p95 (dashed)"
+              subtitle={
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--chart-1)" }} />
+                    <span>p50</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <svg width={14} height={2} aria-hidden className="shrink-0">
+                      <line x1={0} y1={1} x2={14} y2={1}
+                        stroke="var(--chart-3)" strokeWidth={1.5} strokeDasharray="4,3" />
+                    </svg>
+                    <span>p95</span>
+                  </span>
+                </div>
+              }
             >
               <LatencyChart data={metrics.latencyOverTime} />
             </ChartCard>
@@ -159,7 +176,21 @@ export function DashboardView({ metrics }: DashboardViewProps) {
             <ChartCard
               id="chart-tokens"
               title="Token usage over time"
-              subtitle="Prompt + completion"
+              subtitle={
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--chart-1)" }} />
+                    <span>Total</span>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <svg width={14} height={2} aria-hidden className="shrink-0">
+                      <line x1={0} y1={1} x2={14} y2={1}
+                        stroke="var(--chart-2)" strokeWidth={1.25} strokeDasharray="4,3" />
+                    </svg>
+                    <span>Prompt</span>
+                  </span>
+                </div>
+              }
             >
               <TokenUsageChart data={metrics.tokenUsageOverTime} />
             </ChartCard>

@@ -38,12 +38,12 @@ export function ContextBlock({ block }: ContextBlockProps) {
                 ·
               </span>
             )}
-            <span
+            <div
               className="text-[11px] leading-snug"
-              style={{ color: "var(--text-tertiary)" }}
+              style={{ color: "var(--text-secondary)" }}
             >
               <Mrkdwn text={el.text} />
-            </span>
+            </div>
           </React.Fragment>
         )
       })}

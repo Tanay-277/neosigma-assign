@@ -32,12 +32,7 @@ interface HeaderBlockProps {
 
 export function HeaderBlock({ block }: HeaderBlockProps) {
   return (
-    <div
-      className="pb-2"
-      style={{
-        borderBottom: "1px solid var(--border-subtle)",
-      }}
-    >
+    <div className="pb-1">
       <h3
         className="text-base font-semibold leading-snug"
         style={{ color: "var(--text-primary)" }}

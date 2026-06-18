@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { Copy, Check, ExternalLink, ThumbsUp, ThumbsDown } from "lucide-react"
+import { Copy, Check, ExternalLink, ThumbsUp, ThumbsDown, ArrowLeft } from "lucide-react"
 import type { Trace } from "@/lib/types"
 import { hasSlackMessages } from "@/lib/data/slack-cards"
 import { SpanTree } from "@/components/traces/SpanTree"
@@ -48,17 +48,27 @@ export function TraceDetail({ trace }: TraceDetailProps) {
     >
       {/* ── Header ── */}
       <div
-        className="shrink-0 border-b p-4"
+        className="shrink-0 border-b py-4 pl-14 pr-4 md:px-4"
         style={{ borderColor: "var(--border-subtle)" }}
       >
         {/* Trace name + status */}
         <div className="mb-2 flex items-start justify-between gap-3">
-          <h2
-            className="text-base font-semibold leading-snug"
-            style={{ color: "var(--text-primary)" }}
-          >
-            {trace.name}
-          </h2>
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Back button on mobile */}
+            <Link
+              href="/traces"
+              className="md:hidden flex items-center justify-center p-1.5 rounded-lg hover:bg-[var(--surface-3)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] shrink-0 mr-1 transition-colors"
+              title="Back to trace list"
+            >
+              <ArrowLeft size={16} />
+            </Link>
+            <h2
+              className="text-base font-semibold leading-snug truncate"
+              style={{ color: "var(--text-primary)" }}
+            >
+              {trace.name}
+            </h2>
+          </div>
           <div className="flex shrink-0 items-center gap-2">
             {/* Status badge */}
             <span

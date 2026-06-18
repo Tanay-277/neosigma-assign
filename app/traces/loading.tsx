@@ -10,28 +10,35 @@ function Skeleton({ className }: { className?: string }) {
 function TraceRowSkeleton() {
   return (
     <div
-      className="flex items-center gap-3 px-4 py-3"
-      style={{ borderBottom: "1px solid var(--border-subtle)" }}
+      className="flex items-center gap-3 px-3 py-3"
+      style={{ borderBottom: "1px solid var(--border-subtle)", height: 48 }}
     >
-      <Skeleton className="h-5 w-5 rounded-full" />
-      <div className="flex flex-1 items-center gap-3 min-w-0">
-        <Skeleton className="h-[11px] w-40 shrink-0" />
-        <Skeleton className="h-[11px] w-16 shrink-0" />
-        <Skeleton className="h-[11px] w-12 shrink-0" />
+      <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
+      <div className="flex flex-1 flex-col gap-1.5 min-w-0">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-2.5 w-16 rounded" />
       </div>
-      <Skeleton className="h-[10px] w-14 shrink-0" />
-      <Skeleton className="h-[10px] w-12 shrink-0" />
+      <Skeleton className="h-3 w-12 shrink-0 hidden xs:block" />
+      <Skeleton className="h-3 w-14 shrink-0" />
+      <Skeleton className="h-3 w-14 shrink-0 hidden sm:block" />
+      <Skeleton className="h-3 w-12 shrink-0" />
     </div>
   )
 }
 
 export default function TracesLoading() {
   return (
-    <div className="flex h-full overflow-hidden rounded-3xl">
+    <div className="flex h-full overflow-hidden w-full">
       {/* Left panel — list */}
-      <div className="flex w-[420px] shrink-0 flex-col" style={{ borderRight: "1px solid var(--border-subtle)" }}>
+      <div
+        className="w-full md:w-[380px] shrink-0 flex flex-col border-r"
+        style={{
+          borderColor: "var(--border-subtle)",
+          background: "var(--bg)",
+        }}
+      >
         {/* Search bar */}
-        <div className="flex items-center gap-2 px-4 py-3" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+        <div className="flex items-center gap-2 pl-14 pr-4 py-3 md:px-4" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
           <Skeleton className="h-8 flex-1 rounded-md" />
         </div>
 
@@ -51,7 +58,7 @@ export default function TracesLoading() {
       </div>
 
       {/* Right panel — detail */}
-      <div className="flex flex-1 flex-col gap-4 p-6">
+      <div className="hidden md:flex flex-1 flex-col gap-4 p-6" style={{ background: "var(--surface-1)" }}>
         <Skeleton className="h-[18px] w-48" />
         <div className="flex flex-col gap-3 pl-4" style={{ borderLeft: "2px solid var(--border-subtle)" }}>
           {Array.from({ length: 6 }).map((_, i) => (

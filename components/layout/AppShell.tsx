@@ -106,7 +106,10 @@ function NavItem({
 function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
-  React.useEffect(() => setMounted(true), [])
+  React.useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
+  }, [])
   const isDark = resolvedTheme === "dark"
 
   return (
@@ -176,11 +179,17 @@ function MobileToggle() {
   )
 }
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  defaultOpen = true,
+}: {
+  children: React.ReactNode
+  defaultOpen?: boolean
+}) {
   const pathname = usePathname()
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={defaultOpen} className="h-svh overflow-hidden">
       <Sidebar collapsible="icon" variant="inset">
         <SidebarHeader className="px-3 py-4">
           <Brand />

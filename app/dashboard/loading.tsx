@@ -4,11 +4,17 @@ const skeletonSparkData = Array.from({ length: 20 }, (_, i) =>
   50 + Math.sin(i * 0.5) * 25 + (i % 5) * 3
 )
 
-function Skeleton({ className }: { className?: string }) {
+function Skeleton({
+  className,
+  style,
+}: {
+  className?: string
+  style?: React.CSSProperties
+}) {
   return (
     <div
       className={`animate-pulse rounded-md ${className ?? ""}`}
-      style={{ background: "var(--surface-3)" }}
+      style={{ background: "var(--surface-3)", ...style }}
     />
   )
 }
@@ -16,12 +22,12 @@ function Skeleton({ className }: { className?: string }) {
 function KpiCardSkeleton() {
   return (
     <div
-      className="relative flex flex-col gap-0 overflow-hidden p-4 md:p-5 not-last:border-r not-last:border-r-black/8 dark:not-last:border-r-white/8"
+      className="relative flex flex-col gap-0 overflow-hidden p-4 md:p-5"
       style={{ background: "var(--surface-2)" }}
     >
       <div className="flex items-center justify-between mb-4">
         <Skeleton className="h-[10px] w-20" />
-        <div className="flex items-center gap-1.5 rounded-md px-2 py-1" style={{ background: "var(--surface-3)" }}>
+        <div className="flex items-center gap-1.5 rounded-md px-2 py-1" style={{ background: "var(--surface-3)", opacity: 0.2 }}>
           <Skeleton className="h-3 w-3 rounded-full" />
           <Skeleton className="h-[11px] w-12" />
         </div>
@@ -35,7 +41,7 @@ function KpiCardSkeleton() {
   )
 }
 
-function LineChartSkeleton({ height = 180, subtitle }: { height?: number; subtitle?: boolean }) {
+function LineChartSkeleton({ height = 180 }: { height?: number }) {
   return (
     <svg
       className="w-full rounded-sm"
@@ -65,27 +71,22 @@ function LineChartSkeleton({ height = 180, subtitle }: { height?: number; subtit
 }
 
 function BarChartSkeleton({ height = 180 }: { height?: number }) {
-  const bars = [35, 55, 70, 45, 60, 40, 50]
+  const bars = [85, 45, 25, 10, 5]
   return (
-    <svg
-      className="w-full rounded-sm"
-      viewBox="0 0 300 100"
-      preserveAspectRatio="none"
-      style={{ height }}
-    >
-      {bars.map((h, i) => (
-        <rect
-          key={i}
-          x={10 + i * 42}
-          y={100 - h}
-          width={28}
-          height={h}
-          rx="3"
-          fill="var(--surface-4)"
-          fillOpacity="0.35"
-        />
+    <div className="flex flex-col gap-4 py-2" style={{ height }}>
+      {bars.map((w, i) => (
+        <div key={i} className="flex items-center gap-4">
+          {/* Label skeleton */}
+          <Skeleton className="h-3.5 w-24 shrink-0 rounded-md" />
+          {/* Bar track skeleton */}
+          <div className="flex-1 h-3 rounded-md overflow-hidden relative" style={{ background: "var(--surface-3)", opacity: 0.4 }}>
+            <Skeleton className="h-full rounded-md" style={{ width: `${w}%` }} />
+          </div>
+          {/* Metric skeleton */}
+          <Skeleton className="h-3.5 w-16 shrink-0 rounded-md" />
+        </div>
       ))}
-    </svg>
+    </div>
   )
 }
 
@@ -148,8 +149,8 @@ function ChartCardSkeleton({
 }) {
   return (
     <div
-      className="flex flex-col gap-3 rounded-md p-4"
-      style={{ background: "var(--surface-2)", border: "1px solid var(--border-subtle)" }}
+      className="flex flex-col gap-3 rounded-3xl p-4 md:p-5"
+      style={{ background: "var(--surface-2)" }}
     >
       <div className="flex items-center justify-between">
         {title ? <Skeleton className="h-[13px] w-32" /> : <div />}
@@ -162,7 +163,14 @@ function ChartCardSkeleton({
 
 function ModelBreakdownPanelSkeleton() {
   return (
-    <ChartCardSkeleton title="Model breakdown">
+    <div
+      className="flex flex-col gap-4 rounded-3xl p-4 md:p-5"
+      style={{ background: "var(--surface-2)" }}
+    >
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-[13px] w-32" />
+        <Skeleton className="h-[11px] w-10" />
+      </div>
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-4">
           <Skeleton className="h-7 w-full max-w-xs rounded-3xl" />
@@ -184,7 +192,7 @@ function ModelBreakdownPanelSkeleton() {
           </div>
         </div>
       </div>
-    </ChartCardSkeleton>
+    </div>
   )
 }
 
@@ -207,7 +215,7 @@ export default function DashboardLoading() {
       <div className="flex-1 overflow-y-auto p-4 md:p-6">
         <div className="flex w-full flex-col gap-6">
           {/* KPI row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 rounded-3xl overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 rounded-3xl overflow-hidden gap-px" style={{ background: "var(--border-subtle)" }}>
             <KpiCardSkeleton />
             <KpiCardSkeleton />
             <KpiCardSkeleton />

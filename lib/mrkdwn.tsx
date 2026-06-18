@@ -328,8 +328,8 @@ export function Mrkdwn({ text, className }: MrkdwnProps) {
   const nodes = renderTokens(tokens)
 
   return (
-    <span className={className}>
+    <div className={className}>
       {nodes}
-    </span>
+    </div>
   )
 }

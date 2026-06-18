@@ -8,58 +8,33 @@ interface ButtonElementProps {
 export function ButtonElement({ element }: ButtonElementProps) {
   const { style, text, url, action_id } = element
 
-  const baseStyle: React.CSSProperties = {
-    height: 28,
-    paddingLeft: 10,
-    paddingRight: 10,
-    fontSize: 12,
-    fontWeight: 500,
-    borderRadius: "var(--radius-sm)",
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 5,
-    cursor: "pointer",
-    transition: "background 100ms ease, color 100ms ease",
-    textDecoration: "none",
-    whiteSpace: "nowrap",
-    border: "1px solid",
-  }
-
-  let colorStyle: React.CSSProperties
-
-  if (style === "primary") {
-    colorStyle = {
-      background: "var(--accent)",
-      borderColor: "var(--accent)",
-      color: "var(--accent-fg)",
-    }
-  } else if (style === "danger") {
-    colorStyle = {
-      background: "transparent",
-      borderColor: "var(--status-error)",
-      color: "var(--status-error)",
-    }
-  } else {
-    colorStyle = {
-      background: "transparent",
-      borderColor: "var(--border)",
-      color: "var(--text-secondary)",
-    }
-  }
-
-  const content = (
-    <span style={{ ...baseStyle, ...colorStyle }} id={`btn-${action_id}`}>
-      {text.text}
-    </span>
-  )
+  const buttonClass = style === "primary"
+    ? "h-7 px-2.5 text-[11px] font-medium rounded-lg inline-flex items-center gap-1.5 cursor-pointer transition-all duration-100 text-white bg-[var(--accent)] border border-[var(--accent)] hover:opacity-90 active:scale-95 no-underline dark:bg-[color-mix(in_oklch,var(--accent)_12%,transparent)] dark:text-[var(--accent)] dark:border-[var(--accent)] dark:hover:bg-[color-mix(in_oklch,var(--accent)_20%,transparent)]"
+    : style === "danger"
+      ? "h-7 px-2.5 text-[11px] font-medium rounded-lg inline-flex items-center gap-1.5 cursor-pointer transition-all duration-100 text-[var(--status-error)] bg-transparent border border-[var(--status-error)] hover:bg-[color-mix(in_oklch,var(--status-error)_8%,transparent)] active:scale-95 no-underline"
+      : "h-7 px-2.5 text-[11px] font-medium rounded-lg inline-flex items-center gap-1.5 cursor-pointer transition-all duration-100 text-[var(--text-secondary)] bg-transparent border border-[var(--border)] hover:bg-[var(--surface-3)] hover:border-[var(--border-strong)] active:scale-95 no-underline"
 
   if (url) {
     return (
-      <a href={url} target="_blank" rel="noopener noreferrer">
-        {content}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={buttonClass}
+        id={`btn-${action_id}`}
+      >
+        {text.text}
       </a>
     )
   }
 
-  return <button type="button">{content}</button>
+  return (
+    <button
+      type="button"
+      className={buttonClass}
+      id={`btn-${action_id}`}
+    >
+      {text.text}
+    </button>
+  )
 }

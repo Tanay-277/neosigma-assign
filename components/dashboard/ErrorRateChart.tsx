@@ -15,15 +15,31 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const uid = React.useId()
   const [hovered, setHovered] = useState<ErrorRatePoint | null>(null)
-  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0, isRightAlign: false })
+
+  const [dimensions, setDimensions] = useState({ width: 0, height: 220 })
 
   useEffect(() => {
     const wrapper = wrapperRef.current
-    const svg = svgRef.current
-    if (!svg || !wrapper) return
+    if (!wrapper) return
 
-    const width = wrapper.clientWidth || 480
-    const height = 220
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width } = entry.contentRect
+        const height = wrapper.clientHeight || 220
+        setDimensions({ width, height })
+      }
+    })
+
+    resizeObserver.observe(wrapper)
+    return () => resizeObserver.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg || dimensions.width === 0) return
+
+    const { width, height } = dimensions
     const innerW = width - MARGIN.left - MARGIN.right
     const innerH = height - MARGIN.top - MARGIN.bottom
 
@@ -51,6 +67,7 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
         .attr("text-anchor", "middle")
         .attr("fill", "var(--text-tertiary)")
         .attr("font-size", 12)
+        .attr("font-family", "var(--font-paper)")
         .text("No error data in this window")
       return
     }
@@ -86,6 +103,11 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
       .datum(data)
       .attr("fill", `url(#error-area-${uid})`)
       .attr("d", area)
+      .attr("opacity", 0)
+      .transition()
+      .duration(600)
+      .ease(d3.easeCubicOut)
+      .attr("opacity", 1)
 
     // Line
     const line = d3
@@ -94,20 +116,46 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
       .y((d) => yScale(d.errorRate))
       .curve(d3.curveMonotoneX)
 
-    root
+    function animateLine(
+      path: d3.Selection<SVGPathElement, unknown, null, undefined>
+    ) {
+      const node = path.node()
+      if (!node) return
+      const len = node.getTotalLength()
+      path
+        .attr("stroke-dasharray", len)
+        .attr("stroke-dashoffset", len)
+        .transition()
+        .duration(600)
+        .ease(d3.easeCubicOut)
+        .attr("stroke-dashoffset", 0)
+    }
+
+    const pathLine = root
       .append("path")
       .datum(data)
       .attr("fill", "none")
       .attr("stroke", "var(--status-error)")
       .attr("stroke-width", 1.75)
       .attr("stroke-opacity", 0.8)
-      .attr("d", line)
-      .attr("stroke-dashoffset", 1000)
-      .attr("stroke-dasharray", 1000)
+      .attr("d", line) as d3.Selection<SVGPathElement, unknown, null, undefined>
+
+    animateLine(pathLine)
+
+    // Data dots — fade in after line completes
+    root.selectAll(".dot-error")
+      .data(data)
+      .join("circle")
+      .attr("class", "dot-error")
+      .attr("cx", (d) => xScale(new Date(d.bucket)))
+      .attr("cy", (d) => yScale(d.errorRate))
+      .attr("r", 2)
+      .attr("fill", "var(--status-error)")
+      .attr("opacity", 0)
       .transition()
-      .duration(600)
-      .ease(d3.easeCubicOut)
-      .attr("stroke-dashoffset", 0)
+      .delay(400)
+      .duration(300)
+      .attr("opacity", 0.45)
 
     // Baseline
     root
@@ -142,6 +190,8 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
           .attr("font-size", 10)
           .attr("font-family", "var(--font-paper)")
       )
+      .call((g) => g.selectAll(".tick line").attr("stroke", "transparent"))
+
     // Guide Line
     const guideLine = root
       .append("line")
@@ -156,7 +206,7 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
       .append("circle")
       .attr("r", 5)
       .attr("fill", "var(--status-error)")
-      .attr("stroke", "var(--bg)")
+      .attr("stroke", "var(--surface-2)")
       .attr("stroke-width", 1.5)
       .style("display", "none")
 
@@ -189,9 +239,11 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
           focusDot.attr("cx", cx).attr("cy", yScale(closest.errorRate)).style("display", null)
 
           setHovered(closest)
+          const tx = cx + MARGIN.left
           setTooltipPos({
-            x: cx + MARGIN.left,
+            x: tx,
             y: yScale(closest.errorRate) + MARGIN.top,
+            isRightAlign: tx > width * 0.6,
           })
         }
       })
@@ -200,19 +252,20 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
         focusDot.style("display", "none")
         setHovered(null)
       })
-  }, [data])
+  }, [data, dimensions])
 
   return (
-    <div ref={wrapperRef} className="relative w-full">
+    <div ref={wrapperRef} className="relative w-full h-[200px] sm:h-[220px]">
       <svg ref={svgRef} style={{ overflow: "visible", width: "100%", display: "block" }} />
       {hovered && (
         <div
-          className="absolute z-50 pointer-events-none rounded-lg border border-[--border-subtle] p-2.5 shadow-xl backdrop-blur-md text-[11px] flex flex-col gap-1.5 transition-all duration-75 ease-out"
+          className="absolute z-50 pointer-events-none rounded-lg p-2.5 text-[11px] flex flex-col gap-1.5 transition-all duration-75 ease-out"
           style={{
-            left: tooltipPos.x > (wrapperRef.current?.clientWidth ?? 480) * 0.6 ? tooltipPos.x - 170 : tooltipPos.x + 12,
+            left: tooltipPos.isRightAlign ? tooltipPos.x - 170 : tooltipPos.x + 12,
             top: tooltipPos.y - 32,
             transform: "translateY(-50%)",
-            background: "color-mix(in oklch, var(--surface-2) 90%, transparent)",
+            background: "var(--surface-2)",
+            boxShadow: "0 4px 24px oklch(0 0 0 / 0.16), 0 1px 6px oklch(0 0 0 / 0.10)",
           }}
         >
           <span className="font-semibold text-[--text-secondary]" style={{ fontFamily: "var(--font-paper)" }}>

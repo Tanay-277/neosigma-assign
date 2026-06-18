@@ -6,6 +6,7 @@ import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes"
 // Suppress the React 19 false positive warning for next-themes script tag injection
 if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
   const origError = console.error
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   console.error = (...args: any[]) => {
     if (
       typeof args[0] === "string" &&

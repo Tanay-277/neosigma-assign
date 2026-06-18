@@ -108,7 +108,7 @@ export function TraceRow({ trace, selected, onSelect }: TraceRowProps) {
       {/* Model */}
       {model && (
         <span
-          className="shrink-0 text-[10px] leading-none"
+          className="shrink-0 text-[10px] leading-none hidden xs:inline"
           style={{
             fontFamily: "var(--font-paper)",
             color: "var(--text-disabled)",
@@ -131,7 +131,7 @@ export function TraceRow({ trace, selected, onSelect }: TraceRowProps) {
 
       {/* Cost */}
       <span
-        className="w-14 shrink-0 text-right text-[11px] leading-none"
+        className="w-14 shrink-0 text-right text-[11px] leading-none hidden sm:inline"
         style={{
           fontFamily: "var(--font-paper)",
           color: "var(--text-tertiary)",
