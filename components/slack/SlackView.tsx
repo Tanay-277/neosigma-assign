@@ -270,11 +270,11 @@ export function SlackView({ groups, initialTraceId }: SlackViewProps) {
               </Link>
 
               <div
-                className="h-4 w-px"
+                className="h-4 w-px hidden sm:block"
                 style={{ background: "var(--border-subtle)" }}
               />
 
-              <span className="text-[10px] font-medium text-[--text-tertiary] font-mono select-none">
+              <span className="text-[10px] font-medium text-[--text-tertiary] font-mono select-none hidden sm:inline">
                 Incident Alert Details
               </span>
 

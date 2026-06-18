@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useState, useEffect } from "react"
 import Link from "next/link"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons"
@@ -9,6 +9,7 @@ import { getMessagesForTrace, buildFallbackSlackMessage } from "@/lib/data/slack
 import { getTraceById } from "@/lib/data/traces"
 import { SlackCardRenderer } from "@/components/slack/SlackCardRenderer"
 import { LifecycleStepper } from "@/components/slack/LifecycleStepper"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 
 interface SlackDetailProps {
   traceId: string
@@ -20,6 +21,22 @@ export function SlackDetail({ traceId }: SlackDetailProps) {
     return msgs[0]?.id ?? null
   })
   const [showContext, setShowContext] = useState(true)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const checkMobile = () => {
+        const mobile = window.innerWidth < 1024
+        setIsMobile(mobile)
+        if (mobile) {
+          setShowContext(false)
+        }
+      }
+      checkMobile()
+      window.addEventListener("resize", checkMobile)
+      return () => window.removeEventListener("resize", checkMobile)
+    }
+  }, [])
 
   const messages = useMemo(() => {
     const direct = getMessagesForTrace(traceId)
@@ -41,6 +58,73 @@ export function SlackDetail({ traceId }: SlackDetailProps) {
       : activeTrace?.status === "error"
         ? "var(--status-error)"
         : "var(--status-running)"
+
+  const sidebarContent = useMemo(() => {
+    return (
+      <div className="flex flex-col gap-5 h-full">
+        {/* Header */}
+        <div className="flex flex-col gap-1.5 border-b pb-3 select-none" style={{ borderColor: "var(--border-subtle)" }}>
+          <span className="font-mono text-[9px] uppercase tracking-widest text-[--text-tertiary] font-bold">
+            Incident Context
+          </span>
+          <h3 className="text-xs font-semibold text-[--text-primary] font-mono break-all leading-snug">
+            {traceId}
+          </h3>
+        </div>
+
+        {/* Metrics Grid */}
+        <div className="grid grid-cols-2 gap-3 mt-5 select-none">
+          <div className="bg-[var(--surface-3)] p-3 rounded-2xl flex flex-col gap-1">
+            <span className="text-[9px] text-[--text-tertiary] font-mono uppercase font-semibold">Cost</span>
+            <span className="font-mono font-semibold text-xs text-[--text-primary]">
+              {activeTrace ? `$${activeTrace.totalCostUsd.toFixed(6)}` : "—"}
+            </span>
+          </div>
+          <div className="bg-[var(--surface-3)] p-3 rounded-2xl flex flex-col gap-1">
+            <span className="text-[9px] text-[--text-tertiary] font-mono uppercase font-semibold">Tokens</span>
+            <span className="font-mono font-semibold text-xs text-[--text-primary]">
+              {activeTrace ? activeTrace.totalTokens.toLocaleString() : "—"}
+            </span>
+          </div>
+          <div className="bg-[var(--surface-3)] p-3 rounded-2xl flex flex-col gap-1">
+            <span className="text-[9px] text-[--text-tertiary] font-mono uppercase font-semibold">Status</span>
+            <span className="font-mono font-bold text-[10px] uppercase tracking-wider inline-flex items-center gap-1.5" style={{ color: statusColor }}>
+              <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: statusColor }} />
+              {activeTrace?.status ?? "—"}
+            </span>
+          </div>
+          <div className="bg-[var(--surface-3)] p-3 rounded-2xl flex flex-col gap-1">
+            <span className="text-[9px] text-[--text-tertiary] font-mono uppercase font-semibold">Environment</span>
+            <span className="font-mono font-semibold text-[10px] text-[--text-secondary] capitalize truncate">
+              {activeTrace?.metadata.environment ?? "production"}
+            </span>
+          </div>
+        </div>
+
+        {/* Error */}
+        {activeTrace && activeTrace.spans.some((s) => s.error) && (
+          <div className="bg-[color-mix(in_oklch,var(--status-error)_6%,var(--surface-3))] p-4 rounded-2xl flex flex-col gap-2 mt-5 border border-transparent">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--status-error)] flex items-center gap-1.5 select-none">
+              <span className="h-1.5 w-1.5 rounded-full bg-[var(--status-error)] shrink-0" />
+              Root Exception
+            </span>
+            <p className="font-mono text-[10px] leading-relaxed text-[var(--status-error)] break-words">
+              {activeTrace.spans.find((s) => s.error)?.error}
+            </p>
+          </div>
+        )}
+
+        {/* Explore button */}
+        <Link
+          href={`/traces/${traceId}`}
+          className="h-9 px-4 rounded-xl font-medium text-xs inline-flex items-center justify-center gap-2 text-white bg-[var(--accent)] hover:opacity-90 active:scale-95 transition-all duration-150 no-underline shrink-0 mt-5 w-full dark:bg-[color-mix(in_oklch,var(--accent)_12%,transparent)] dark:text-[var(--accent)] dark:border dark:border-[var(--accent)] dark:hover:bg-[color-mix(in_oklch,var(--accent)_20%,transparent)]"
+        >
+          <span>Explore Trace Spans</span>
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={13} className="rotate-180 shrink-0" />
+        </Link>
+      </div>
+    )
+  }, [traceId, activeTrace, statusColor])
 
   if (messages.length === 0) {
     return (
@@ -83,9 +167,9 @@ export function SlackDetail({ traceId }: SlackDetailProps) {
           <span style={{ fontFamily: "var(--font-paper)" }}>{traceId}</span>
         </Link>
 
-        <div className="h-4 w-px" style={{ background: "var(--border-subtle)" }} />
+        <div className="h-4 w-px hidden sm:block" style={{ background: "var(--border-subtle)" }} />
 
-        <span className="text-[10px] font-medium text-[--text-tertiary] font-mono select-none">
+        <span className="text-[10px] font-medium text-[--text-tertiary] font-mono select-none hidden sm:inline">
           Incident Alert Details
         </span>
 
@@ -146,79 +230,33 @@ export function SlackDetail({ traceId }: SlackDetailProps) {
           </div>
         </div>
 
-        {/* Right: context sidebar */}
-        {showContext && (
-          <div
-            className="hidden lg:flex flex-col border-l overflow-y-auto w-[320px] shrink-0"
-            style={{
-              borderColor: "var(--border-subtle)",
-              background: "var(--surface-1)",
-            }}
-          >
-            <div className="p-5 md:p-6 shrink-0 h-full overflow-y-auto">
-              {/* Header */}
-              <div className="flex flex-col gap-1.5 border-b pb-3 select-none" style={{ borderColor: "var(--border-subtle)" }}>
-                <span className="font-mono text-[9px] uppercase tracking-widest text-[--text-tertiary] font-bold">
-                  Incident Context
-                </span>
-                <h3 className="text-xs font-semibold text-[--text-primary] font-mono break-all leading-snug">
-                  {traceId}
-                </h3>
-              </div>
-
-              {/* Metrics Grid */}
-              <div className="grid grid-cols-2 gap-3 mt-5 select-none">
-                <div className="bg-[var(--surface-3)] p-3 rounded-2xl flex flex-col gap-1">
-                  <span className="text-[9px] text-[--text-tertiary] font-mono uppercase font-semibold">Cost</span>
-                  <span className="font-mono font-semibold text-xs text-[--text-primary]">
-                    {activeTrace ? `$${activeTrace.totalCostUsd.toFixed(6)}` : "—"}
-                  </span>
-                </div>
-                <div className="bg-[var(--surface-3)] p-3 rounded-2xl flex flex-col gap-1">
-                  <span className="text-[9px] text-[--text-tertiary] font-mono uppercase font-semibold">Tokens</span>
-                  <span className="font-mono font-semibold text-xs text-[--text-primary]">
-                    {activeTrace ? activeTrace.totalTokens.toLocaleString() : "—"}
-                  </span>
-                </div>
-                <div className="bg-[var(--surface-3)] p-3 rounded-2xl flex flex-col gap-1">
-                  <span className="text-[9px] text-[--text-tertiary] font-mono uppercase font-semibold">Status</span>
-                  <span className="font-mono font-bold text-[10px] uppercase tracking-wider inline-flex items-center gap-1.5" style={{ color: statusColor }}>
-                    <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: statusColor }} />
-                    {activeTrace?.status ?? "—"}
-                  </span>
-                </div>
-                <div className="bg-[var(--surface-3)] p-3 rounded-2xl flex flex-col gap-1">
-                  <span className="text-[9px] text-[--text-tertiary] font-mono uppercase font-semibold">Environment</span>
-                  <span className="font-mono font-semibold text-[10px] text-[--text-secondary] capitalize truncate">
-                    {activeTrace?.metadata.environment ?? "production"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Error */}
-              {activeTrace && activeTrace.spans.some((s) => s.error) && (
-                <div className="bg-[color-mix(in_oklch,var(--status-error)_6%,var(--surface-3))] p-4 rounded-2xl flex flex-col gap-2 mt-5 border border-transparent">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--status-error)] flex items-center gap-1.5 select-none">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--status-error)] shrink-0" />
-                    Root Exception
-                  </span>
-                  <p className="font-mono text-[10px] leading-relaxed text-[var(--status-error)] break-words">
-                    {activeTrace.spans.find((s) => s.error)?.error}
-                  </p>
-                </div>
-              )}
-
-              {/* Explore button */}
-              <Link
-                href={`/traces/${traceId}`}
-                className="h-9 px-4 rounded-xl font-medium text-xs inline-flex items-center justify-center gap-2 text-white bg-[var(--accent)] hover:opacity-90 active:scale-95 transition-all duration-150 no-underline shrink-0 mt-5 w-full dark:bg-[color-mix(in_oklch,var(--accent)_12%,transparent)] dark:text-[var(--accent)] dark:border dark:border-[var(--accent)] dark:hover:bg-[color-mix(in_oklch,var(--accent)_20%,transparent)]"
-              >
-                <span>Explore Trace Spans</span>
-                <HugeiconsIcon icon={ArrowLeft01Icon} size={13} className="rotate-180 shrink-0" />
-              </Link>
-            </div>
+        {/* Right Column: Incident Context Panel (Desktop Inline) */}
+        <div
+          className={`hidden lg:flex flex-col border-l overflow-y-auto transition-all duration-300 ease-in-out overflow-hidden shrink-0 ${
+            showContext ? "w-[320px] opacity-100" : "w-0 opacity-0 pointer-events-none border-l-0!"
+          }`}
+          style={{
+            borderColor: "var(--border-subtle)",
+            background: "var(--surface-1)",
+          }}
+        >
+          <div className="w-[320px] p-5 md:p-6 shrink-0 h-full overflow-y-auto">
+            {sidebarContent}
           </div>
-        )}
+        </div>
+
+        {/* Mobile/Tablet Overlay Sheet */}
+        <Sheet open={isMobile && showContext} onOpenChange={setShowContext}>
+          <SheetContent
+            side="right"
+            showCloseButton={false}
+            className="w-[320px] max-w-[320px] p-0 border-l border-[var(--border-subtle)] bg-[var(--surface-1)]"
+          >
+            <div className="p-5 md:p-6 h-full overflow-y-auto">
+              {sidebarContent}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </div>
   )
