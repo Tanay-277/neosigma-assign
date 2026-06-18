@@ -25,7 +25,7 @@ export default async function TraceDetailPage({ params }: Props) {
   if (!trace) notFound()
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden ">
       <TraceExplorer traces={allTraces} initialId={id} />
     </div>
   )

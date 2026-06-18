@@ -1,7 +1,8 @@
 "use client"
 
 import React, { useState, useMemo } from "react"
-import type { Trace } from "@/lib/types"
+import { ChevronRight } from "lucide-react"
+import type { Trace, SpanNode } from "@/lib/types"
 import { buildSpanTree, flattenSpanTree } from "@/lib/data/traces"
 import { SpanNodeRow } from "@/components/traces/SpanNode"
 import { SpanDetail } from "@/components/traces/SpanDetail"
@@ -17,16 +18,26 @@ export function SpanTree({ trace }: SpanTreeProps) {
   const tree = useMemo(() => buildSpanTree(trace.spans), [trace.spans])
   const flatSpans = useMemo(() => flattenSpanTree(tree, collapsed), [tree, collapsed])
 
-  // Compute waterfall bounds
-  const traceStartMs = useMemo(() => new Date(trace.startTime).getTime(), [trace.startTime])
-  const traceDurationMs = useMemo(() => {
-    if (trace.latencyMs) return trace.latencyMs
-    const allEndTimes = trace.spans
-      .filter((s) => s.endTime)
-      .map((s) => new Date(s.endTime!).getTime())
-    if (allEndTimes.length === 0) return 5000
-    return Math.max(...allEndTimes) - traceStartMs
-  }, [trace, traceStartMs])
+  // Derive waterfall bounds from the actual span data.
+  // Anchor start to the root span (depth 0) so the first bar always begins at 0%.
+  // Anchor end to the latest span end across all spans so the last bar reaches 100%.
+  const { traceStartMs, traceDurationMs } = useMemo(() => {
+    if (flatSpans.length === 0) return { traceStartMs: 0, traceDurationMs: 0 }
+
+    const root = flatSpans.find((n) => n.depth === 0)
+    const minStart = root
+      ? new Date(root.startTime).getTime()
+      : Math.min(...flatSpans.map((n) => new Date(n.startTime).getTime()))
+
+    const maxEnd = Math.max(
+      ...flatSpans.map((n) => new Date(n.startTime).getTime() + (n.latencyMs ?? 0))
+    )
+
+    return {
+      traceStartMs: minStart,
+      traceDurationMs: Math.max(maxEnd - minStart, 1),
+    }
+  }, [flatSpans])
 
   const selectedSpan = useMemo(
     () => flatSpans.find((s) => s.id === selectedSpanId) ?? null,
@@ -42,7 +53,6 @@ export function SpanTree({ trace }: SpanTreeProps) {
     })
   }
 
-  // Find nodes with children in the flat list
   const nodesWithChildren = useMemo(() => {
     const s = new Set<string>()
     for (const span of flatSpans) {
@@ -52,7 +62,7 @@ export function SpanTree({ trace }: SpanTreeProps) {
   }, [flatSpans])
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ height: "100%" }}>
+    <div className="flex flex-col overflow-hidden flex-1">
       {/* Column headers */}
       <div
         className="flex shrink-0 items-center gap-2 border-b px-3 py-1.5"
@@ -62,13 +72,13 @@ export function SpanTree({ trace }: SpanTreeProps) {
         }}
       >
         <span
-          className="flex-1 text-[10px] font-semibold uppercase font-mono tracking-widest"
-          style={{ color: "var(--text-disabled)" }}
+          className="flex-1 text-[10px] font-semibold uppercase tracking-widest font-mono"
+          style={{ color: "var(--text-disabled)", paddingLeft: 4 }}
         >
           Span
         </span>
         <span
-          className="w-12 shrink-0 text-right text-[10px] font-semibold uppercase font-mono tracking-widest"
+          className="w-12 text-right text-[10px] font-semibold uppercase tracking-widest font-mono"
           style={{ color: "var(--text-disabled)" }}
         >
           Latency
@@ -104,8 +114,23 @@ export function SpanTree({ trace }: SpanTreeProps) {
       </div>
 
       {/* Span detail panel */}
-      {selectedSpan && (
+      {selectedSpan ? (
         <SpanDetail span={selectedSpan} onClose={() => setSelectedSpanId(null)} />
+      ) : (
+        <div
+          className="flex shrink-0 items-center justify-center gap-3 border-t"
+          style={{
+            height: 64,
+            borderColor: "var(--border-subtle)",
+            color: "var(--text-tertiary)",
+            background: "var(--surface-2)",
+          }}
+        >
+          <ChevronRight size={18} style={{ color: "var(--text-disabled)" }} />
+          <span className="text-[13px]" style={{ color: "var(--text-tertiary)"}}>
+            Click any span to view its details
+          </span>
+        </div>
       )}
     </div>
   )

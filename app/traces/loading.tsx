@@ -14,11 +14,7 @@ function TraceRowSkeleton() {
       style={{ borderBottom: "1px solid var(--border-subtle)", height: 48 }}
     >
       <Skeleton className="size-1.5 rounded-full shrink-0" />
-      <div className="flex flex-1 flex-col gap-1 min-w-0">
-        <Skeleton className="h-3 w-28" />
-        <Skeleton className="h-2.5 w-16 rounded" />
-      </div>
-      <Skeleton className="h-3 w-12 shrink-0 hidden xs:block" />
+      <Skeleton className="h-3 w-40 flex-1" />
       <Skeleton className="h-3 w-10 shrink-0" />
       <Skeleton className="h-3 w-10 shrink-0 hidden sm:block" />
       <Skeleton className="h-3 w-8 shrink-0" />
@@ -31,7 +27,7 @@ export default function TracesLoading() {
     <div className="flex h-full overflow-hidden">
       {/* Left panel — list */}
       <div
-        className="w-full md:w-[380px] shrink-0 flex flex-col border-r"
+        className="flex w-full shrink-0 flex-col border-r lg:w-[420px] xl:w-[480px]"
         style={{
           borderColor: "var(--border-subtle)",
           background: "var(--bg)",
@@ -75,7 +71,7 @@ export default function TracesLoading() {
       </div>
 
       {/* Right panel — detail */}
-      <div className="hidden md:flex flex-1 flex-col" style={{ background: "var(--surface-1)" }}>
+      <div className="hidden lg:flex flex-1 flex-col min-w-0" style={{ background: "var(--surface-1)" }}>
         {/* Detail header */}
         <div className="shrink-0 border-b p-4" style={{ borderColor: "var(--border-subtle)" }}>
           <div className="flex items-start justify-between mb-3">

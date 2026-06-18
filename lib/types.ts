@@ -149,6 +149,26 @@ export interface SlackMessage {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Issues
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type IssueStatus = "open" | "in_progress" | "resolved"
+export type IssuePriority = "urgent" | "high" | "medium" | "low"
+
+export interface Issue {
+  id: string
+  title: string
+  status: IssueStatus
+  priority: IssuePriority
+  assignee: string
+  traceId: string
+  traceName: string
+  error: string
+  createdAt: string
+  description: string
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Metrics
 // ─────────────────────────────────────────────────────────────────────────────
 

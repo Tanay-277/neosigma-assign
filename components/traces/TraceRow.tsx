@@ -2,7 +2,7 @@
 
 import React from "react"
 import type { Trace } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { cn, formatInt } from "@/lib/utils"
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -28,6 +28,16 @@ function formatLatency(ms?: number): string {
   return `${(ms / 1000).toFixed(2)}s`
 }
 
+const ENV_COLORS: Record<string, { bg: string; text: string }> = {
+  production:  { bg: "color-mix(in oklch, var(--status-success) 18%, transparent)", text: "var(--status-success)" },
+  staging:     { bg: "color-mix(in oklch, var(--status-warning) 18%, transparent)", text: "var(--status-warning)" },
+  development: { bg: "color-mix(in oklch, var(--type-llm) 18%, transparent)",       text: "var(--type-llm)" },
+}
+
+function getEnvColor(env: string) {
+  return ENV_COLORS[env] ?? { bg: "var(--surface-3)", text: "var(--text-tertiary)" }
+}
+
 function getModel(trace: Trace): string | null {
   const llmSpan = trace.spans.find((s) => s.type === "llm" && s.model)
   return llmSpan?.model ?? null
@@ -37,9 +47,10 @@ interface TraceRowProps {
   trace: Trace
   selected: boolean
   onSelect: (id: string) => void
+  variant?: "compact" | "spacious"
 }
 
-export function TraceRow({ trace, selected, onSelect }: TraceRowProps) {
+export function TraceRow({ trace, selected, onSelect, variant = "compact" }: TraceRowProps) {
   const model = getModel(trace)
   const env = trace.metadata.environment
 
@@ -50,6 +61,62 @@ export function TraceRow({ trace, selected, onSelect }: TraceRowProps) {
     !selected && trace.status === "running" && "running-row"
   )
 
+  if (variant === "spacious") {
+    return (
+      <div
+        className={rowClass}
+        style={{ height: 68, minHeight: 68 }}
+        onClick={() => onSelect(trace.id)}
+        role="row"
+        aria-selected={selected}
+      >
+        <span
+          className={cn(
+            "status-dot shrink-0 self-center mt-1",
+            trace.status === "success" && "status-dot-success",
+            trace.status === "error" && "status-dot-error",
+            trace.status === "running" && "status-dot-running animate-running"
+          )}
+        />
+
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-[13px] font-medium leading-tight" style={{ color: "var(--text-primary)" }}>
+              {trace.name}
+            </span>
+            {env && (
+              <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] leading-none" style={{ background: getEnvColor(env).bg, color: getEnvColor(env).text }}>
+                {env}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+            {model && (
+              <>
+                <span className="truncate max-w-[120px]">{model}</span>
+                <span style={{ color: "var(--text-disabled)" }}>·</span>
+              </>
+            )}
+            <span>{formatInt(trace.totalTokens)} tokens</span>
+          </div>
+        </div>
+
+        <span className="w-14 shrink-0 text-right text-[11px] leading-none font-mono tabular-nums" style={{ color: trace.status === "running" ? "var(--status-running)" : "var(--text-secondary)" }}>
+          {trace.status === "running" ? "live" : formatLatency(trace.latencyMs)}
+        </span>
+
+        <span className="w-14 shrink-0 text-right text-[11px] leading-none font-mono tabular-nums hidden sm:inline" style={{ color: "var(--text-tertiary)" }}>
+          {formatCost(trace.totalCostUsd)}
+        </span>
+
+        <span className="w-12 shrink-0 text-right text-[10px] leading-none font-mono tabular-nums" style={{ color: "var(--text-disabled)" }}>
+          {relativeTime(trace.startTime)}
+        </span>
+      </div>
+    )
+  }
+
   return (
     <div
       className={rowClass}
@@ -58,7 +125,6 @@ export function TraceRow({ trace, selected, onSelect }: TraceRowProps) {
       role="row"
       aria-selected={selected}
     >
-      {/* Status dot */}
       <span
         className={cn(
           "status-dot shrink-0",
@@ -68,86 +134,19 @@ export function TraceRow({ trace, selected, onSelect }: TraceRowProps) {
         )}
       />
 
-      {/* Name + tags */}
-      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span
-          className="truncate text-[13px] font-medium leading-none"
-          style={{ color: "var(--text-primary)" }}
-        >
-          {trace.name}
-        </span>
-        <div className="flex items-center gap-1.5">
-          {env && (
-            <span
-              className="rounded px-1 py-px text-[10px] font-medium leading-none"
-              style={{
-                background: "var(--surface-3)",
-                color: "var(--text-tertiary)",
-              }}
-            >
-              {env}
-            </span>
-          )}
-          {trace.tags.slice(0, 1).map((tag) =>
-            tag !== env ? (
-              <span
-                key={tag}
-                className="rounded px-1 py-px text-[10px] leading-none"
-                style={{
-                  background: "var(--surface-3)",
-                  color: "var(--text-tertiary)",
-                }}
-              >
-                {tag}
-              </span>
-            ) : null
-          )}
-        </div>
-      </div>
+      <span className="truncate min-w-0 flex-1 text-[13px] font-medium" style={{ color: "var(--text-primary)" }}>
+        {trace.name}
+      </span>
 
-      {/* Model */}
-      {model && (
-        <span
-          className="shrink-0 text-[10px] leading-none hidden xs:inline"
-          style={{
-            fontFamily: "var(--font-paper)",
-            color: "var(--text-disabled)",
-          }}
-        >
-          {model}
-        </span>
-      )}
-
-      {/* Latency */}
-      <span
-        className="w-14 shrink-0 text-right text-[11px] leading-none"
-        style={{
-          fontFamily: "var(--font-paper)",
-          color: trace.status === "running" ? "var(--status-running)" : "var(--text-secondary)",
-        }}
-      >
+      <span className="w-14 shrink-0 text-right text-[11px] leading-none font-mono tabular-nums" style={{ color: trace.status === "running" ? "var(--status-running)" : "var(--text-secondary)" }}>
         {trace.status === "running" ? "live" : formatLatency(trace.latencyMs)}
       </span>
 
-      {/* Cost */}
-      <span
-        className="w-14 shrink-0 text-right text-[11px] leading-none hidden sm:inline"
-        style={{
-          fontFamily: "var(--font-paper)",
-          color: "var(--text-tertiary)",
-        }}
-      >
+      <span className="w-14 shrink-0 text-right text-[11px] leading-none font-mono tabular-nums hidden sm:inline" style={{ color: "var(--text-tertiary)" }}>
         {formatCost(trace.totalCostUsd)}
       </span>
 
-      {/* Timestamp */}
-      <span
-        className="w-12 shrink-0 text-right text-[10px] leading-none"
-        style={{
-          fontFamily: "var(--font-paper)",
-          color: "var(--text-disabled)",
-        }}
-      >
+      <span className="w-12 shrink-0 text-right text-[10px] leading-none font-mono tabular-nums" style={{ color: "var(--text-disabled)" }}>
         {relativeTime(trace.startTime)}
       </span>
     </div>

@@ -2,7 +2,7 @@
 
 import React from "react"
 import type { SpanNode } from "@/lib/types"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -48,20 +48,29 @@ export function SpanNodeRow({
   const typeCfg = getTypeCfg(node.type)
   const paddingLeft = 12 + node.depth * 18
 
-  // Waterfall bar calculation
   const spanStartMs = new Date(node.startTime).getTime()
-  const barLeft = traceDurationMs > 0
-    ? ((spanStartMs - traceStartMs) / traceDurationMs) * 100
-    : 0
-  const barWidth = traceDurationMs > 0 && node.latencyMs !== undefined
-    ? Math.max((node.latencyMs / traceDurationMs) * 100, 0.5)
-    : node.status === "running" ? 30 : 1
+
+  const barLeft =
+    traceDurationMs > 0
+      ? ((spanStartMs - traceStartMs) / traceDurationMs) * 100
+      : 0
+
+  const barWidth =
+    traceDurationMs > 0 && node.latencyMs !== undefined
+      ? Math.max((node.latencyMs / traceDurationMs) * 100, 0.5)
+      : node.status === "running"
+        ? 100 - barLeft
+        : 0.5
+
+  // Clamp so bar never overflows the right edge
+  const clampedWidth = Math.min(barWidth, 100 - barLeft)
+  const clampedLeft = Math.max(barLeft, 0)
 
   const barColor =
-    node.status === "error" ? "var(--status-error)" :
+    node.status === "error"   ? "var(--status-error)"   :
     node.status === "running" ? "var(--status-running)" :
-    node.type === "llm" ? "var(--type-llm)" :
-    node.type === "tool" ? "var(--type-tool)" :
+    node.type === "llm"       ? "var(--type-llm)"       :
+    node.type === "tool"      ? "var(--type-tool)"      :
     node.type === "retriever" ? "var(--type-retriever)" :
     "var(--border)"
 
@@ -76,7 +85,11 @@ export function SpanNodeRow({
         paddingRight: 12,
         height: 36,
         borderBottom: "1px solid var(--border-subtle)",
-        borderLeft: isSelected ? "2px solid var(--accent)" : node.depth > 0 ? "1px solid var(--border-subtle)" : "none",
+        borderLeft: isSelected
+          ? "2px solid var(--accent)"
+          : node.depth > 0
+            ? "1px solid var(--border-subtle)"
+            : "none",
       }}
       onClick={onSelect}
     >
@@ -84,7 +97,7 @@ export function SpanNodeRow({
       <button
         className={cn(
           "flex h-4 w-4 shrink-0 items-center justify-center rounded transition-all",
-          hasChildren ? "opacity-60 hover:opacity-100" : "opacity-0 pointer-events-none"
+          hasChildren ? "opacity-60 hover:opacity-100" : "pointer-events-none opacity-0"
         )}
         onClick={(e) => {
           e.stopPropagation()
@@ -92,13 +105,7 @@ export function SpanNodeRow({
         }}
         style={{ color: "var(--text-tertiary)" }}
       >
-        <ChevronRight
-          size={12}
-          style={{
-            transform: hasChildren && !isCollapsed ? "rotate(90deg)" : "rotate(0deg)",
-            transition: "transform 120ms ease",
-          }}
-        />
+        {hasChildren && (isCollapsed ? <ChevronRight size={12} /> : <ChevronDown size={12} />)}
       </button>
 
       {/* Type badge */}
@@ -114,7 +121,7 @@ export function SpanNodeRow({
         className={cn(
           "status-dot shrink-0",
           node.status === "success" && "status-dot-success",
-          node.status === "error" && "status-dot-error",
+          node.status === "error"   && "status-dot-error",
           node.status === "running" && "status-dot-running animate-running"
         )}
       />
@@ -148,12 +155,21 @@ export function SpanNodeRow({
         {node.status === "running" ? "live" : formatLatency(node.latencyMs)}
       </span>
 
-      {/* Waterfall bar — absolute bottom strip */}
+      {/* Hover chevron */}
+      <span
+        className="shrink-0 opacity-0 transition-opacity duration-75 group-hover:opacity-40"
+        style={{ color: "var(--text-disabled)" }}
+      >
+        <ChevronRight size={12} />
+      </span>
+
+      {/* Waterfall bar */}
       <div
-        className="absolute bottom-0"
         style={{
-          left: `${paddingLeft + 72}px`,
-          right: 12,
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
           height: 3,
           background: "var(--surface-3)",
         }}
@@ -161,13 +177,14 @@ export function SpanNodeRow({
         <div
           style={{
             position: "absolute",
-            left: `${Math.min(barLeft, 95)}%`,
-            width: `${Math.min(barWidth, 100 - Math.min(barLeft, 95))}%`,
+            top: 0,
+            left: `${clampedLeft}%`,
+            width: `${clampedWidth}%`,
             height: "100%",
             background: barColor,
             borderRadius: 1,
             opacity: 0.7,
-            transition: "width 300ms ease",
+            transition: "width 300ms ease, left 300ms ease",
           }}
         />
       </div>

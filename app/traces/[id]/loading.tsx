@@ -12,7 +12,7 @@ export default function TraceDetailLoading() {
     <div className="flex h-full overflow-hidden">
       {/* Left panel — list */}
       <div
-        className="flex w-[420px] shrink-0 flex-col"
+        className="hidden lg:flex w-[420px] shrink-0 flex-col"
         style={{ borderRight: "1px solid var(--border-subtle)" }}
       >
         {/* Search bar */}
