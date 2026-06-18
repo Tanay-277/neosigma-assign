@@ -20,6 +20,7 @@ function formatCost(usd: number): string {
 
 interface TraceDetailProps {
   trace: Trace
+  fullPage?: boolean
 }
 
 const TABS = [
@@ -29,7 +30,7 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"]
 
-export function TraceDetail({ trace }: TraceDetailProps) {
+export function TraceDetail({ trace, fullPage = false }: TraceDetailProps) {
   const [idCopied, setIdCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>("spans")
   const hasAlerts = hasSlackMessages(trace.id)
@@ -66,16 +67,18 @@ export function TraceDetail({ trace }: TraceDetailProps) {
             >
               {trace.name}
             </h2>
-            <a
-              href={`/traces/${trace.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] shrink-0 ml-0.5"
-              style={{ width: 24, height: 24, color: "var(--text-tertiary)" }}
-              aria-label="Open full view in new tab"
-            >
-              <ExternalLink size={12} />
-            </a>
+            {!fullPage && (
+              <a
+                href={`/traces/${trace.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] shrink-0 ml-0.5"
+                style={{ width: 24, height: 24, color: "var(--text-tertiary)" }}
+                aria-label="Open full view in new tab"
+              >
+                <ExternalLink size={12} />
+              </a>
+            )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {/* Status badge */}
@@ -100,7 +103,7 @@ export function TraceDetail({ trace }: TraceDetailProps) {
             {/* Slack alert button */}
             {hasAlerts && (
               <Link
-                href={`/slack?traceId=${trace.id}`}
+                href={`/slack/${trace.id}`}
                 className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-colors hover:opacity-80"
                 style={{
                   background: "color-mix(in oklch, var(--status-warning) 14%, transparent)",

@@ -18,15 +18,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TraceDetailPage({ params }: Props) {
   const { id } = await params
-  const { getTraceById, allTraces } = await import("@/lib/data/traces")
-  const { TraceExplorer } = await import("@/components/traces/TraceExplorer")
+  const { getTraceById } = await import("@/lib/data/traces")
+  const { TraceDetail } = await import("@/components/traces/TraceDetail")
 
   const trace = getTraceById(id)
   if (!trace) notFound()
 
   return (
-    <div className="flex h-full flex-col overflow-hidden ">
-      <TraceExplorer traces={allTraces} initialId={id} />
+    <div className="flex h-full flex-col overflow-hidden bg-(--surface-1) md:rounded-2xl">
+      <TraceDetail trace={trace} fullPage />
     </div>
   )
 }

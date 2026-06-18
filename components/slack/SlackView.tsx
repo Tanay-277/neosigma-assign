@@ -4,7 +4,7 @@ import React, { useState, useMemo } from "react"
 import Link from "next/link"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Message01Icon, ArrowLeft01Icon } from "@hugeicons/core-free-icons"
-import { HelpCircle, Sidebar, PanelLeft } from "lucide-react"
+import { HelpCircle, Sidebar, PanelLeft, ExternalLink } from "lucide-react"
 import { useSidebar } from "@/components/ui/sidebar"
 import type { IncidentGroup } from "@/lib/data/slack-cards"
 import type { SlackMessage } from "@/lib/types"
@@ -272,10 +272,23 @@ export function SlackView({ groups, initialTraceId }: SlackViewProps) {
                 Incident Alert Details
               </span>
 
-              {/* Toggle Sidebar Button */}
+              <div className="ml-auto flex items-center gap-1">
+                {/* Open in new tab */}
+                <Link
+                  href={`/slack/${activeTraceId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3]"
+                  style={{ width: 28, height: 28, color: "var(--text-tertiary)" }}
+                  aria-label="Open full alert view in new tab"
+                >
+                  <ExternalLink size={12} />
+                </Link>
+
+                {/* Toggle Sidebar Button */}
               <button
                 onClick={() => setShowContext(!showContext)}
-                className={`ml-auto p-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
+                className={`p-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
                   showContext
                     ? "bg-[var(--surface-3)] text-[var(--accent)]"
                     : "text-[var(--text-tertiary)] hover:bg-[var(--surface-2)] hover:text-[var(--text-primary)]"
@@ -285,10 +298,11 @@ export function SlackView({ groups, initialTraceId }: SlackViewProps) {
                 <Sidebar size={14} />
               </button>
             </div>
+          </div>
 
-            {/* Split layout: Center Column (Slack details) + Right Sidebar (Incident Context) */}
-            <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden h-full">
-              {/* Center Column Wrapper (non-scrollable on desktop, scrollable on mobile) */}
+          {/* Split layout: Center Column (Slack details) + Right Sidebar (Incident Context) */}
+          <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden h-full">
+            {/* Center Column Wrapper (non-scrollable on desktop, scrollable on mobile) */}
               <div className="flex-1 relative flex flex-col lg:overflow-hidden w-full shrink-0 lg:shrink">
                 {/* Scrollable Slack message block flow */}
                 <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-36 md:pb-28 flex flex-col items-center w-full">
