@@ -6,21 +6,28 @@ import type { SortingState, RowSelectionState } from "@tanstack/react-table"
 import { columns, MODEL_COLORS } from "./columns"
 import { DataTable } from "./data-table"
 import { DonutChart } from "./donut-chart"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Search, X } from "lucide-react"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { Activity01Icon, DollarSignIcon, ChartAverageIcon } from "@hugeicons/core-free-icons"
+import {
+  Activity01Icon,
+  DollarSignIcon,
+  ChartAverageIcon,
+} from "@hugeicons/core-free-icons"
 
 const METRICS = [
   { value: "traces", label: "Traces", icon: Activity01Icon },
-  { value: "cost", label: "Total cost", icon: DollarSignIcon },
   { value: "tokens", label: "Avg tokens", icon: ChartAverageIcon },
+  { value: "cost", label: "Total cost", icon: DollarSignIcon },
 ] as const
 
 const MAX_DONUT_SEGMENTS = 9
 const OTHER_COLOR = "var(--surface-4)"
-const LABELS = { traces: "traces", cost: "total cost", tokens: "avg tokens" } as const
+const LABELS = {
+  traces: "traces",
+  cost: "total cost",
+  tokens: "avg tokens",
+} as const
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value)
@@ -60,9 +67,10 @@ export function ModelBreakdownPanel({ data }: ModelBreakdownPanelProps) {
 
   const donutData = useMemo(() => {
     const selected = Object.keys(rowSelection)
-    const source = selected.length > 0
-      ? filteredData.filter((row) => selected.includes(row.model))
-      : filteredData
+    const source =
+      selected.length > 0
+        ? filteredData.filter((row) => selected.includes(row.model))
+        : filteredData
 
     let segments = source.map((row, i) => {
       let value = 0
@@ -124,109 +132,117 @@ export function ModelBreakdownPanel({ data }: ModelBreakdownPanelProps) {
   }
 
   return (
-    <div className="flex flex-col animate-fade-in">
-      <div className="flex flex-col lg:flex-row gap-6">
-        <div className="flex flex-col flex-1 min-w-0 gap-4">
-          <div className="flex items-center gap-4">
-            <div className="relative w-full max-w-xs">
-              <Search
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 pointer-events-none"
-                style={{ color: "var(--text-tertiary)" }}
-              />
-              <Input
-                value={globalFilter}
-                onChange={(e) => setGlobalFilter(e.target.value)}
-                placeholder="Filter models..."
-                className="h-7 pl-8 pr-7 text-[11px] rounded-3xl w-full"
-              />
-              {globalFilter && (
-                <button
-                  onClick={() => setGlobalFilter("")}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 size-4 flex items-center justify-center rounded-full hover:bg-muted/50 transition-colors"
+    <div
+      className="flex flex-col lg:flex-row gap-6 rounded-3xl animate-fade-in"
+      style={{
+        background: "var(--surface-2)",
+      }}
+    >
+      <div className="flex flex-col flex-1 min-w-0 gap-4 p-4 md:p-5">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold uppercase font-mono tracking-widest" style={{ color: "var(--text-tertiary)" }}>
+            Model breakdown
+          </h3>
+          <span className="font-mono text-[10px]" style={{ color: "var(--text-tertiary)" }}>
+            {filteredData.length}/{data.length}
+          </span>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="relative w-full max-w-xs">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2"
+              style={{ color: "var(--text-tertiary)" }}
+            />
+            <Input
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder="Filter models..."
+              className="h-7 w-full rounded-3xl pr-7 pl-8 text-[11px]"
+            />
+            {globalFilter && (
+              <button
+                onClick={() => setGlobalFilter("")}
+                className="absolute top-1/2 right-1.5 flex size-4 -translate-y-1/2 items-center justify-center rounded-full transition-colors hover:bg-muted/50"
+              >
+                <X className="size-3" style={{ color: "var(--text-tertiary)" }} />
+              </button>
+            )}
+          </div>
+          {selectedCount > 0 && (
+            <button
+              onClick={handleClearSelection}
+              className="font-mono text-[10px] transition-opacity hover:opacity-80 shrink-0"
+              style={{ color: "var(--text-tertiary)" }}
+            >
+              Clear ({selectedCount})
+            </button>
+          )}
+        </div>
+        <DataTable
+          columns={columns}
+          data={instantFilteredData}
+          sorting={sorting}
+          onSortingChange={setSorting}
+          rowSelection={rowSelection}
+          onRowSelectionChange={setRowSelection}
+        />
+      </div>
+      <div className="shrink-0 flex flex-col animate-slide-up bg-border/50 rounded-2xl m-2 overflow-hidden">
+        <div className="grid grid-cols-1 xs:grid-cols-3" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+          {METRICS.map((m) => {
+            const active = donutMetric === m.value
+            return (
+              <button
+                key={m.value}
+                onClick={() => setDonutMetric(m.value as "traces" | "cost" | "tokens")}
+                className="flex items-center justify-center gap-1.5 px-3 py-3 font-mono text-xs font-semibold tracking-widest uppercase transition-colors"
+                style={{
+                  color: active ? "var(--text-primary)" : "var(--text-tertiary)",
+                  background: active ? "var(--surface-4)" : "transparent",
+                }}
+              >
+                <HugeiconsIcon icon={m.icon} size={14} className="shrink-0" />
+                <span className="whitespace-nowrap">{m.label}</span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="flex w-full flex-col xs:flex-row items-center gap-4 lg:flex-col lg:items-center p-4 md:p-5 pt-3">
+          <div className="flex min-w-0 flex-1 justify-center">
+            <DonutChart
+              data={donutData}
+              total={donutTotal}
+              metricLabel={metricLabel}
+              onSegmentClick={handleSegmentClick}
+            />
+          </div>
+          <div className="flex max-w-48 min-w-0 flex-col gap-1.5 lg:hidden">
+            {donutData.map((seg) => (
+              <div
+                key={seg.label}
+                className="flex min-w-0 items-center gap-1.5"
+                style={{ opacity: seg.opacity }}
+              >
+                <span
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ background: seg.color }}
+                />
+                <span
+                  className="truncate font-mono text-[10px]"
+                  style={{ color: "var(--text-secondary)" }}
                 >
-                  <X className="size-3" style={{ color: "var(--text-tertiary)" }} />
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-3 ml-auto">
-              {selectedCount > 0 && (
-                <button
-                  onClick={handleClearSelection}
-                  className="text-[10px] font-mono hover:opacity-80 transition-opacity"
+                  {seg.label}
+                </span>
+                <span
+                  className="ml-auto shrink-0 font-mono text-[10px] tabular-nums"
                   style={{ color: "var(--text-tertiary)" }}
                 >
-                  Clear ({selectedCount})
-                </button>
-              )}
-              <span
-                className="text-[10px] font-mono shrink-0"
-                style={{ color: "var(--text-tertiary)" }}
-              >
-                {filteredData.length}/{data.length}
-              </span>
-            </div>
-          </div>
-          <DataTable
-            columns={columns}
-            data={instantFilteredData}
-            sorting={sorting}
-            onSortingChange={setSorting}
-            rowSelection={rowSelection}
-            onRowSelectionChange={setRowSelection}
-          />
-        </div>
-
-        <div className="w-full lg:w-[380px] shrink-0 flex flex-col items-center gap-4 animate-slide-up">
-          <Tabs
-            value={donutMetric}
-            onValueChange={(v) => setDonutMetric(v as "traces" | "cost" | "tokens")}
-          >
-            <TabsList className="h-auto! gap-0.5">
-              {METRICS.map((m) => (
-                <TabsTrigger key={m.value} value={m.value} className="px-3 py-1 text-xs font-semibold uppercase font-mono tracking-widest gap-1.5">
-                  <HugeiconsIcon icon={m.icon} size={14} className="shrink-0" />
-                  {m.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-          <div className="flex flex-row items-center gap-4 w-full lg:flex-col lg:items-center">
-            <div className="flex-1 flex justify-center min-w-0">
-              <DonutChart
-                data={donutData}
-                total={donutTotal}
-                metricLabel={metricLabel}
-                onSegmentClick={handleSegmentClick}
-              />
-            </div>
-            <div className="flex flex-col gap-1.5 lg:hidden min-w-0 max-w-48">
-              {donutData.map((seg) => (
-                <div
-                  key={seg.label}
-                  className="flex items-center gap-1.5 min-w-0"
-                  style={{ opacity: seg.opacity }}
-                >
-                  <span
-                    className="size-2 rounded-full shrink-0"
-                    style={{ background: seg.color }}
-                  />
-                  <span
-                    className="text-[10px] font-mono truncate"
-                    style={{ color: "var(--text-secondary)" }}
-                  >
-                    {seg.label}
-                  </span>
-                  <span
-                    className="text-[10px] font-mono tabular-nums shrink-0 ml-auto"
-                    style={{ color: "var(--text-tertiary)" }}
-                  >
-                    {donutTotal > 0
-                      ? `${((seg.value / donutTotal) * 100).toFixed(1)}%`
-                      : "—"}
-                  </span>
-                </div>
-              ))}
-            </div>
+                  {donutTotal > 0
+                    ? `${((seg.value / donutTotal) * 100).toFixed(1)}%`
+                    : "—"}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

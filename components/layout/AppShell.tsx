@@ -14,6 +14,7 @@ import {
   ArrowLeft01Icon,
   AbsoluteIcon,
 } from "@hugeicons/core-free-icons"
+import { PanelLeftIcon } from "lucide-react"
 
 import {
   SidebarProvider,
@@ -160,6 +161,21 @@ function CollapseToggle() {
 }
 
 
+function MobileToggle() {
+  const { setOpenMobile } = useSidebar()
+
+  return (
+    <button
+      onClick={() => setOpenMobile(true)}
+      className="absolute top-3 left-3 z-10 flex size-8 items-center justify-center rounded-lg sm:hidden"
+      style={{ background: "var(--surface-3)" }}
+      aria-label="Open sidebar"
+    >
+      <PanelLeftIcon size={14} style={{ color: "var(--text-secondary)" }} />
+    </button>
+  )
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
 
@@ -197,6 +213,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </Sidebar>
 
       <SidebarInset  className="bg-(--bg)/90">
+        <MobileToggle />
         <ViewTransition name="page">
           {children}
         </ViewTransition>

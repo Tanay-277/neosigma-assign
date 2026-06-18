@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef, useEffect, useState } from "react"
+import { useRef, useEffect, useState } from "react"
 import * as d3 from "d3"
 import type { CostByModel } from "@/lib/types"
 
@@ -46,6 +46,7 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
         .attr("text-anchor", "middle")
         .attr("fill", "var(--text-tertiary)")
         .attr("font-size", 12)
+        .attr("font-family", "var(--font-paper)")
         .text("No model cost data")
       return
     }
@@ -62,7 +63,7 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
       .range([0, innerH])
       .padding(0.3)
 
-    // Background track
+    // Background tracks
     root
       .selectAll(".track")
       .data(data)
@@ -95,7 +96,6 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
           .attr("opacity", 1.0)
           .attr("fill", (d, i) => MODEL_COLORS[i % MODEL_COLORS.length])
 
-        // Dim non-hovered bars
         root
           .selectAll(".bar")
           .filter((barData) => barData !== d)
@@ -137,9 +137,9 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
       .attr("fill", "var(--text-secondary)")
       .attr("font-size", 11)
       .attr("font-family", "var(--font-paper)")
-      .text((d) => `$${d.totalCost.toFixed(4)}`)
+      .text((d) => `$${d.totalCost.toFixed(6)}`)
 
-    // Trace count
+    // Trace count labels
     root
       .selectAll(".count-label")
       .data(data)
@@ -173,7 +173,7 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
       .call(
         d3.axisBottom(xScale)
           .ticks(4)
-          .tickFormat((d) => `$${(d as number).toFixed(3)}`)
+          .tickFormat((d) => `$${(d as number).toFixed(6)}`)
       )
       .call((g) => g.select(".domain").remove())
       .call((g) =>
@@ -191,31 +191,33 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
       <svg ref={svgRef} style={{ overflow: "visible", width: "100%", display: "block" }} />
       {hovered && (
         <div
-          className="absolute z-50 pointer-events-none rounded-lg border border-[--border-subtle] p-2.5 shadow-xl backdrop-blur-md text-[11px] flex flex-col gap-1.5 transition-all duration-75 ease-out"
+          className="absolute z-50 pointer-events-none rounded-md px-2.5 py-1.5 text-[11px] shadow-md"
           style={{
             left: tooltipPos.x > (wrapperRef.current?.clientWidth ?? 480) * 0.65 ? tooltipPos.x - 175 : tooltipPos.x + 12,
             top: tooltipPos.y,
             transform: "translateY(-50%)",
-            background: "color-mix(in oklch, var(--surface-2) 90%, transparent)",
-            minWidth: "150px"
+            background: "var(--surface-3)",
+            color: "var(--text-primary)",
+            border: "1px solid var(--border)",
+            minWidth: "150px",
           }}
         >
-          <span className="flex items-center gap-1.5 font-semibold text-[--text-primary]" style={{ fontFamily: "var(--font-paper)" }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: MODEL_COLORS[hoveredIdx % MODEL_COLORS.length] }} />
+          <span className="flex items-center gap-1.5 font-medium" style={{ color: "var(--text-primary)" }}>
+            <span className="size-1.5 rounded-full" style={{ background: MODEL_COLORS[hoveredIdx % MODEL_COLORS.length] }} />
             {hovered.model}
           </span>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-0.5 mt-1">
             <div className="flex items-center justify-between gap-4">
-              <span className="text-[--text-tertiary]">Total cost</span>
-              <span className="font-mono font-medium" style={{ color: "var(--accent)" }}>${hovered.totalCost.toFixed(4)}</span>
+              <span style={{ color: "var(--text-tertiary)" }}>Total cost</span>
+              <span className="font-mono tabular-nums font-medium" style={{ color: "var(--text-primary)" }}>${hovered.totalCost.toFixed(6)}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-[--text-tertiary]">Total traces</span>
-              <span className="font-mono font-medium text-[--text-secondary]">{hovered.traceCount}</span>
+              <span style={{ color: "var(--text-tertiary)" }}>Total traces</span>
+              <span className="font-mono tabular-nums font-medium" style={{ color: "var(--text-primary)" }}>{hovered.traceCount}</span>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <span className="text-[--text-tertiary]">Avg tokens</span>
-              <span className="font-mono font-medium text-[--text-secondary]">
+              <span style={{ color: "var(--text-tertiary)" }}>Avg tokens</span>
+              <span className="font-mono tabular-nums font-medium" style={{ color: "var(--text-primary)" }}>
                 {hovered.traceCount > 0 ? Math.round(hovered.totalTokens / hovered.traceCount).toLocaleString() : "0"}
               </span>
             </div>

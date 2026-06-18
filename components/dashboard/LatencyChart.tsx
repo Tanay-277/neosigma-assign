@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useRef, useEffect, useState } from "react"
+import { useRef, useEffect, useState, useId } from "react"
 import * as d3 from "d3"
 import type { LatencyPoint } from "@/lib/types"
 
@@ -13,7 +13,7 @@ const MARGIN = { top: 20, right: 32, bottom: 44, left: 56 }
 export function LatencyChart({ data }: LatencyChartProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const wrapperRef = useRef<HTMLDivElement>(null)
-  const uid = React.useId()
+  const uid = useId()
   const [hovered, setHovered] = useState<LatencyPoint | null>(null)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
 
@@ -29,7 +29,6 @@ export function LatencyChart({ data }: LatencyChartProps) {
 
     d3.select(svg).selectAll("*").remove()
 
-    // Gradient defs
     const defs = d3.select(svg).append("defs")
     ;["p50", "p95"].forEach((key) => {
       const grad = defs.append("linearGradient").attr("id", `latency-area-${uid}-${key}`).attr("x1", "0").attr("y1", "0").attr("x2", "0").attr("y2", "1")
@@ -52,6 +51,7 @@ export function LatencyChart({ data }: LatencyChartProps) {
         .attr("text-anchor", "middle")
         .attr("fill", "var(--text-tertiary)")
         .attr("font-size", 12)
+        .attr("font-family", "var(--font-paper)")
         .text("No latency data in this window")
       return
     }
@@ -125,7 +125,6 @@ export function LatencyChart({ data }: LatencyChartProps) {
       .y1((d) => yScale(d.p95))
       .curve(d3.curveMonotoneX)
 
-    // Area fills
     root.append("path").datum(data).attr("fill", `url(#latency-area-${uid}-p50)`).attr("d", areaP50)
     root.append("path").datum(data).attr("fill", `url(#latency-area-${uid}-p95)`).attr("d", areaP95)
 
@@ -141,36 +140,52 @@ export function LatencyChart({ data }: LatencyChartProps) {
       .y((d) => yScale(d.p95))
       .curve(d3.curveMonotoneX)
 
-    // p50 — solid
-    root
+    // p50 — solid with draw animation
+    const pathP50 = root
       .append("path")
       .datum(data)
       .attr("fill", "none")
       .attr("stroke", "var(--chart-1)")
       .attr("stroke-width", 1.75)
       .attr("d", lineP50)
-      .attr("opacity", 0)
-      .transition()
-      .duration(500)
-      .ease(d3.easeCubicOut)
-      .attr("opacity", 1)
 
-    // p95 — dashed
-    root
+    const p50Node = pathP50.node() as SVGPathElement | null
+    if (p50Node) {
+      const len = p50Node.getTotalLength()
+      pathP50
+        .attr("stroke-dasharray", len)
+        .attr("stroke-dashoffset", len)
+        .transition()
+        .duration(600)
+        .ease(d3.easeCubicOut)
+        .attr("stroke-dashoffset", 0)
+    }
+
+    // p95 — dashed with draw animation
+    const pathP95 = root
       .append("path")
       .datum(data)
       .attr("fill", "none")
       .attr("stroke", "var(--chart-3)")
       .attr("stroke-width", 1.75)
-      .attr("stroke-dasharray", "5,3")
       .attr("d", lineP95)
-      .attr("opacity", 0)
-      .transition()
-      .duration(500)
-      .ease(d3.easeCubicOut)
-      .attr("opacity", 1)
 
-    // Data dots — subtle, semi-transparent
+    const p95Node = pathP95.node() as SVGPathElement | null
+    if (p95Node) {
+      const len = p95Node.getTotalLength()
+      pathP95
+        .attr("stroke-dasharray", len)
+        .attr("stroke-dashoffset", len)
+        .transition()
+        .duration(600)
+        .ease(d3.easeCubicOut)
+        .attr("stroke-dashoffset", 0)
+        .on("end", function () {
+          d3.select(this).attr("stroke-dasharray", "5,3")
+        })
+    }
+
+    // Data dots — subtle, fade in after lines
     root
       .selectAll(".dot-p50")
       .data(data)
@@ -180,6 +195,10 @@ export function LatencyChart({ data }: LatencyChartProps) {
       .attr("cy", (d) => yScale(d.p50))
       .attr("r", 2)
       .attr("fill", "var(--chart-1)")
+      .attr("opacity", 0)
+      .transition()
+      .delay(400)
+      .duration(300)
       .attr("opacity", 0.45)
 
     root
@@ -191,9 +210,13 @@ export function LatencyChart({ data }: LatencyChartProps) {
       .attr("cy", (d) => yScale(d.p95))
       .attr("r", 2)
       .attr("fill", "var(--chart-3)")
+      .attr("opacity", 0)
+      .transition()
+      .delay(400)
+      .duration(300)
       .attr("opacity", 0.35)
 
-    // Guide Line
+    // Guide line and focus dots
     const guideLine = root
       .append("line")
       .attr("stroke", "var(--border-subtle)")
@@ -207,7 +230,7 @@ export function LatencyChart({ data }: LatencyChartProps) {
       .append("circle")
       .attr("r", 5)
       .attr("fill", "var(--chart-1)")
-      .attr("stroke", "var(--bg)")
+      .attr("stroke", "var(--surface-1)")
       .attr("stroke-width", 1.5)
       .style("display", "none")
 
@@ -215,11 +238,11 @@ export function LatencyChart({ data }: LatencyChartProps) {
       .append("circle")
       .attr("r", 5)
       .attr("fill", "var(--chart-3)")
-      .attr("stroke", "var(--bg)")
+      .attr("stroke", "var(--surface-1)")
       .attr("stroke-width", 1.5)
       .style("display", "none")
 
-    // Invisible mouse event listener overlay
+    // Invisible overlay for mouse tracking
     root
       .append("rect")
       .attr("width", innerW)
@@ -265,49 +288,48 @@ export function LatencyChart({ data }: LatencyChartProps) {
 
   return (
     <div>
-      {/* Legend */}
       <div className="mb-3 flex items-center gap-4">
         <div className="flex items-center gap-1.5">
-          <div className="h-0.5 w-5 rounded" style={{ background: "var(--chart-1)" }} />
-          <span className="text-[11px] text-black/40 dark:text-white/40">p50</span>
+          <span className="size-2 rounded-full" style={{ background: "var(--chart-1)" }} />
+          <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>p50</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <svg width={20} height={2}>
-            <line x1={0} y1={1} x2={20} y2={1} stroke="var(--chart-3)" strokeWidth={1.5} strokeDasharray="4,3" />
+          <svg width={16} height={2}>
+            <line x1={0} y1={1} x2={16} y2={1} stroke="var(--chart-3)" strokeWidth={1.5} strokeDasharray="4,3" />
           </svg>
-          <span className="text-[11px] text-black/40 dark:text-white/40">p95</span>
+          <span className="text-[11px] font-mono" style={{ color: "var(--text-tertiary)" }}>p95</span>
         </div>
       </div>
       <div ref={wrapperRef} className="relative w-full">
         <svg ref={svgRef} style={{ overflow: "visible", width: "100%" }} />
         {hovered && (
           <div
-            className="absolute z-50 pointer-events-none rounded-lg border border-[--border-subtle] p-2.5 shadow-xl backdrop-blur-md text-[11px] flex flex-col gap-1.5 transition-all duration-75 ease-out"
+            className="absolute z-50 pointer-events-none rounded-md px-2.5 py-1.5 text-[11px] shadow-md"
             style={{
               left: tooltipPos.x > (wrapperRef.current?.clientWidth ?? 480) * 0.6 ? tooltipPos.x - 170 : tooltipPos.x + 12,
               top: tooltipPos.y - 32,
               transform: "translateY(-50%)",
-              background: "color-mix(in oklch, var(--surface-2) 90%, transparent)",
+              background: "var(--surface-3)",
+              color: "var(--text-primary)",
+              border: "1px solid var(--border)",
             }}
           >
-            <span className="font-semibold text-[--text-secondary]" style={{ fontFamily: "var(--font-paper)" }}>
+            <div className="font-medium mb-1" style={{ color: "var(--text-primary)" }}>
               {new Date(hovered.bucket).toLocaleDateString()} {new Date(hovered.bucket).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between gap-4">
-                <span className="flex items-center gap-1.5 text-[--text-tertiary]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[--chart-1]" />
-                  p50
-                </span>
-                <span className="font-mono font-medium text-[--text-primary]">{hovered.p50.toFixed(0)}ms</span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="flex items-center gap-1.5 text-[--text-tertiary]">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[--chart-3]" />
-                  p95
-                </span>
-                <span className="font-mono font-medium text-[--text-primary]">{hovered.p95.toFixed(0)}ms</span>
-              </div>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1.5" style={{ color: "var(--text-tertiary)" }}>
+                <span className="size-1.5 rounded-full" style={{ background: "var(--chart-1)" }} />
+                p50
+              </span>
+              <span className="font-mono font-medium tabular-nums">{hovered.p50.toFixed(0)}ms</span>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <span className="flex items-center gap-1.5" style={{ color: "var(--text-tertiary)" }}>
+                <span className="size-1.5 rounded-full" style={{ background: "var(--chart-3)" }} />
+                p95
+              </span>
+              <span className="font-mono font-medium tabular-nums">{hovered.p95.toFixed(0)}ms</span>
             </div>
           </div>
         )}

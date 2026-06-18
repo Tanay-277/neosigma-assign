@@ -27,18 +27,17 @@ function ChartCard({
   return (
     <div
       id={id}
-      className="flex flex-col gap-3 rounded-md p-4 md:p-5"
+      className="flex flex-col gap-3 rounded-3xl p-4 md:p-5"
       style={{
         background: "var(--surface-2)",
-        border: "1px solid var(--border-subtle)",
       }}
     >
       <div className="flex items-center justify-between">
-        <h3 className="text-[10px] font-semibold uppercase font-mono tracking-widest text-black/40 dark:text-white/40">
+        <h3 className="text-sm font-semibold uppercase font-mono tracking-widest" style={{ color: "var(--text-tertiary)" }}>
           {title}
         </h3>
         {subtitle && (
-          <span className="text-[10px] font-mono text-black/40 dark:text-white/40">
+          <span className="text-[10px] font-mono" style={{ color: "var(--text-tertiary)" }}>
             {subtitle}
           </span>
         )}
@@ -67,10 +66,10 @@ export function DashboardView({ metrics }: DashboardViewProps) {
       </div>
 
       {/* Content — scrollable */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
-        <div className="flex w-full max-w-300 flex-col gap-6">
+      <div className="flex-1 overflow-y-auto p-4 xl:p-6">
+        <div className="flex w-full flex-col gap-6">
           {/* KPI Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 rounded-3xl overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 rounded-3xl overflow-hidden gap-px" style={{ background: "var(--border-subtle)" }}>
             <KpiCard
               id="kpi-total-traces"
               label="Total Traces"
@@ -166,15 +165,8 @@ export function DashboardView({ metrics }: DashboardViewProps) {
             </ChartCard>
           </div>
 
-          {/* Model breakdown table */}
-          {metrics.costByModel.length > 0 && (
-            <ChartCard
-              id="model-breakdown-table"
-              title="Model breakdown"
-            >
-              <ModelBreakdownPanel data={metrics.costByModel} />
-            </ChartCard>
-          )}
+          {/* Model breakdown */}
+          {metrics.costByModel.length > 0 && <ModelBreakdownPanel data={metrics.costByModel} />}
         </div>
       </div>
     </div>
