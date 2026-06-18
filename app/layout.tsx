@@ -57,7 +57,7 @@ export default async function RootLayout({
       )}
     >
       <body>
-        <ThemeProvider defaultTheme="dark" attribute="class" enableSystem={false} disableTransitionOnChange>
+        <ThemeProvider defaultTheme="light" attribute="class" enableSystem={false} disableTransitionOnChange>
           <TooltipProvider>
             <AppShell defaultOpen={defaultOpen}>{children}</AppShell>
           </TooltipProvider>

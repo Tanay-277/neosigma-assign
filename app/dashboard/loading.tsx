@@ -215,7 +215,8 @@ export default function DashboardLoading() {
       <div className="flex-1 overflow-y-auto p-4 md:p-6">
         <div className="flex w-full flex-col gap-6">
           {/* KPI row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 rounded-3xl overflow-hidden gap-px" style={{ background: "var(--border-subtle)" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 rounded-3xl overflow-hidden gap-px" style={{ background: "var(--border-subtle)" }}>
+            <KpiCardSkeleton />
             <KpiCardSkeleton />
             <KpiCardSkeleton />
             <KpiCardSkeleton />
