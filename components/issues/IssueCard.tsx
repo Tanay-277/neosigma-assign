@@ -1,10 +1,8 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import Link from "next/link"
-import type { Issue, IssuePriority, IssueStatus } from "@/lib/types"
-import { updateIssueStatus } from "@/lib/data/issues"
-import { cn } from "@/lib/utils"
+import type { Issue, IssuePriority } from "@/lib/types"
 
 const PRIORITY_CONFIG: Record<IssuePriority, { label: string; color: string; bg: string }> = {
   urgent: { label: "Urgent", color: "var(--status-error)", bg: "color-mix(in oklch, var(--status-error) 14%, transparent)" },
@@ -12,14 +10,6 @@ const PRIORITY_CONFIG: Record<IssuePriority, { label: string; color: string; bg:
   medium: { label: "Medium", color: "var(--accent)", bg: "var(--accent-muted)" },
   low:    { label: "Low",    color: "var(--text-tertiary)", bg: "var(--surface-3)" },
 }
-
-const STATUS_CONFIG: Record<IssueStatus, { label: string; color: string }> = {
-  open:        { label: "Open",        color: "var(--accent)" },
-  in_progress: { label: "In Progress", color: "var(--status-warning)" },
-  resolved:    { label: "Resolved",    color: "var(--status-success)" },
-}
-
-const STATUSES: IssueStatus[] = ["open", "in_progress", "resolved"]
 
 function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
@@ -33,22 +23,22 @@ function relativeTime(iso: string): string {
 
 interface IssueCardProps {
   issue: Issue
-  onStatusChange?: (id: string, status: IssueStatus) => void
 }
 
-export function IssueCard({ issue, onStatusChange }: IssueCardProps) {
-  const [selectOpen, setSelectOpen] = useState(false)
+export function IssueCard({ issue }: IssueCardProps) {
   const pc = PRIORITY_CONFIG[issue.priority]
-  const sc = STATUS_CONFIG[issue.status]
 
-  function handleStatusChange(status: IssueStatus) {
-    updateIssueStatus(issue.id, status)
-    onStatusChange?.(issue.id, status)
-    setSelectOpen(false)
+  function handleDragStart(e: React.DragEvent) {
+    e.dataTransfer.setData("text/plain", issue.id)
+    e.dataTransfer.effectAllowed = "move"
   }
 
   return (
-    <div className="group relative">
+    <div
+      draggable
+      onDragStart={handleDragStart}
+      className="cursor-grab active:cursor-grabbing"
+    >
       <Link
         href={`/issues/${issue.id}`}
         className="flex flex-col gap-2 rounded-xl border p-3 transition-all duration-150 hover:shadow-xs"
@@ -110,30 +100,6 @@ export function IssueCard({ issue, onStatusChange }: IssueCardProps) {
           </span>
         )}
       </Link>
-
-      {/* Status dots — show on hover */}
-      <div
-        className="absolute bottom-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-        onClick={(e) => e.preventDefault()}
-      >
-        {STATUSES.map((s) => {
-          const cfg = STATUS_CONFIG[s]
-          const isActive = s === issue.status
-          return (
-            <button
-              key={s}
-              onClick={() => handleStatusChange(s)}
-              className="rounded-full transition-all duration-150"
-              style={{
-                width: isActive ? 10 : 8,
-                height: isActive ? 10 : 8,
-                background: isActive ? cfg.color : "var(--surface-4)",
-              }}
-              title={cfg.label}
-            />
-          )
-        })}
-      </div>
     </div>
   )
 }

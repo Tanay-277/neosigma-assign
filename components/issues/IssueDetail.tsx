@@ -3,10 +3,10 @@
 import React, { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, ExternalLink, Bug, Check } from "lucide-react"
+import { ArrowLeft, ExternalLink, Bug } from "lucide-react"
 import type { Issue, IssuePriority, IssueStatus, Trace } from "@/lib/types"
 import { updateIssueStatus } from "@/lib/data/issues"
-import { cn } from "@/lib/utils"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const PRIORITY_CONFIG: Record<IssuePriority, { label: string; color: string; bg: string }> = {
   urgent: { label: "Urgent", color: "var(--status-error)", bg: "color-mix(in oklch, var(--status-error) 14%, transparent)" },
@@ -58,8 +58,9 @@ export function IssueDetail({ issue, trace }: IssueDetailProps) {
   const pc = PRIORITY_CONFIG[issue.priority]
   const sc = STATUS_CONFIG[currentStatus]
 
-  function handleStatusChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const newStatus = e.target.value as IssueStatus
+  function handleStatusChange(value: string | null) {
+    if (!value) return
+    const newStatus = value as IssueStatus
     updateIssueStatus(issue.id, newStatus)
     setCurrentStatus(newStatus)
     router.refresh()
@@ -85,20 +86,24 @@ export function IssueDetail({ issue, trace }: IssueDetailProps) {
         >
           {issue.id}
         </span>
-        <div className="relative">
-          <select
-            value={currentStatus}
-            onChange={handleStatusChange}
-            className="appearance-none cursor-pointer rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider leading-none outline-none"
-            style={{ background: sc.bg, color: sc.color, border: "none" }}
+        <Select value={currentStatus} onValueChange={handleStatusChange}>
+          <SelectTrigger
+            className="h-auto rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider leading-none border-0 gap-1"
+            style={{ background: sc.bg, color: sc.color }}
           >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
             {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_CONFIG[s].label}
-              </option>
+              <SelectItem key={s} value={s} className="text-xs">
+                <span className="flex items-center gap-2">
+                  <span className="size-1.5 rounded-full" style={{ background: STATUS_CONFIG[s].color }} />
+                  {STATUS_CONFIG[s].label}
+                </span>
+              </SelectItem>
             ))}
-          </select>
-        </div>
+          </SelectContent>
+        </Select>
         <span
           className="rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider leading-none"
           style={{ background: pc.bg, color: pc.color }}
@@ -118,21 +123,25 @@ export function IssueDetail({ issue, trace }: IssueDetailProps) {
           {/* Details grid */}
           <div className="flex flex-col gap-1 mb-6">
             <Row label="Status" value={
-              <span className="flex items-center gap-1.5">
-                <span className="size-1.5 rounded-full" style={{ background: sc.color }} />
-                <select
-                  value={currentStatus}
-                  onChange={handleStatusChange}
-                  className="appearance-none cursor-pointer bg-transparent outline-none text-[11px]"
+              <Select value={currentStatus} onValueChange={handleStatusChange}>
+                <SelectTrigger
+                  className="h-auto border-0 gap-1.5 bg-transparent p-0"
                   style={{ color: "var(--text-secondary)" }}
                 >
+                  <span className="size-1.5 rounded-full" style={{ background: sc.color }} />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
                   {STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_CONFIG[s].label}
-                    </option>
+                    <SelectItem key={s} value={s} className="text-xs">
+                      <span className="flex items-center gap-2">
+                        <span className="size-1.5 rounded-full" style={{ background: STATUS_CONFIG[s].color }} />
+                        {STATUS_CONFIG[s].label}
+                      </span>
+                    </SelectItem>
                   ))}
-                </select>
-              </span>
+                </SelectContent>
+              </Select>
             } />
             <Row label="Priority" value={
               <span className="flex items-center gap-1.5">
