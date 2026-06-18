@@ -4,7 +4,8 @@ import React, { useState, useMemo } from "react"
 import Link from "next/link"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { Message01Icon, ArrowLeft01Icon } from "@hugeicons/core-free-icons"
-import { HelpCircle, Sidebar } from "lucide-react"
+import { HelpCircle, Sidebar, PanelLeft } from "lucide-react"
+import { useSidebar } from "@/components/ui/sidebar"
 import type { IncidentGroup } from "@/lib/data/slack-cards"
 import type { SlackMessage } from "@/lib/types"
 import { getMessagesForTrace } from "@/lib/data/slack-cards"
@@ -21,6 +22,8 @@ interface SlackViewProps {
 }
 
 export function SlackView({ groups, initialTraceId }: SlackViewProps) {
+  const { setOpenMobile } = useSidebar()
+
   // If no trace ID was explicitly passed via URL params, set to null so the tutorial loads by default
   const defaultTraceId = initialTraceId ?? null
 
@@ -65,6 +68,10 @@ export function SlackView({ groups, initialTraceId }: SlackViewProps) {
   )
 
   function handleTraceSelect(traceId: string) {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      window.open(`/traces/${traceId}`, "_self")
+      return
+    }
     setActiveTraceId(traceId)
     setActiveMessageId(getMessagesForTrace(traceId)[0]?.id ?? null)
     if (typeof window !== "undefined") {
@@ -132,7 +139,7 @@ export function SlackView({ groups, initialTraceId }: SlackViewProps) {
 
         {/* Action Button to hop directly to Trace Tree */}
         <Link
-          href={`/traces?id=${activeTraceId}`}
+          href={`/traces/${activeTraceId}`}
           className="h-9 px-4 rounded-xl font-medium text-xs inline-flex items-center justify-center gap-2 text-white bg-[var(--accent)] hover:opacity-90 active:scale-95 transition-all duration-150 no-underline shrink-0 mt-auto dark:bg-[color-mix(in_oklch,var(--accent)_12%,transparent)] dark:text-[var(--accent)] dark:border dark:border-[var(--accent)] dark:hover:bg-[color-mix(in_oklch,var(--accent)_20%,transparent)]"
         >
           <span>Explore Trace Spans</span>
@@ -156,9 +163,17 @@ export function SlackView({ groups, initialTraceId }: SlackViewProps) {
       >
         {/* Header */}
         <div
-          className="flex items-center gap-2 border-b pl-14 pr-4 py-3 shrink-0 h-13 lg:px-4"
+          className="flex items-center gap-2 border-b px-4 py-3 shrink-0 h-13"
           style={{ borderColor: "var(--border-subtle)" }}
         >
+          <button
+            onClick={() => setOpenMobile(true)}
+            className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] lg:hidden shrink-0"
+            style={{ width: 32, height: 32, color: "var(--text-tertiary)" }}
+            aria-label="Open sidebar"
+          >
+            <PanelLeft size={16} />
+          </button>
           <HugeiconsIcon icon={Message01Icon} size={15} className="text-[--text-tertiary] shrink-0" />
           <h1 className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
             Alerts
@@ -240,7 +255,7 @@ export function SlackView({ groups, initialTraceId }: SlackViewProps) {
 
               {/* Back to trace link */}
               <Link
-                href={`/traces?id=${activeTraceId}`}
+          href={`/traces/${activeTraceId}`}
                 className="flex items-center gap-1.5 py-4 text-[11px] transition-colors hover:opacity-80"
                 style={{ color: "var(--text-secondary)" }}
               >
@@ -279,7 +294,7 @@ export function SlackView({ groups, initialTraceId }: SlackViewProps) {
                 <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-36 md:pb-28 flex flex-col items-center w-full">
                   {activeMessage ? (
                     <div className="w-full max-w-[680px]">
-                      <SlackCardRenderer message={activeMessage} />
+                      <SlackCardRenderer message={activeMessage} traceId={activeTraceId} />
                     </div>
                   ) : (
                     <div

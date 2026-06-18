@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Search, X, GitBranch, ArrowUpDown, ArrowUp, ArrowDown, LayoutList, LayoutGrid, ArrowLeft, PanelLeft } from "lucide-react"
+import { Search, X, GitBranch, ArrowUpDown, ArrowUp, ArrowDown, LayoutList, LayoutGrid, ArrowLeft, PanelLeft, ExternalLink } from "lucide-react"
 import { useSidebar } from "@/components/ui/sidebar"
 import type { Trace } from "@/lib/types"
 import { filterTraces } from "@/lib/data/traces"
@@ -88,6 +88,10 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
   )
 
   function handleSelect(id: string) {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      router.push(`/traces/${id}`)
+      return
+    }
     const params = new URLSearchParams(searchParams.toString())
     if (params.get("id") === id) {
       params.delete("id")
@@ -314,14 +318,14 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
       >
         {selectedTrace ? (
           <>
-            {/* Mobile header bar with back button (left) and sidebar toggle (right) */}
+            {/* Mobile header bar with back button (left), trace name (center), full-view + sidebar (right) */}
             <div className="lg:hidden flex shrink-0 items-center border-b gap-2 px-3" style={{
               height: 48,
               borderColor: "var(--border-subtle)",
               background: "var(--surface-1)",
             }}>
               <button
-                onClick={() => handleSelect(selectedId!)}
+                onClick={() => router.push("/traces")}
                 className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] shrink-0"
                 style={{ width: 32, height: 32, color: "var(--text-tertiary)" }}
                 aria-label="Back to trace list"
@@ -331,6 +335,16 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
               <span className="truncate text-[13px] font-semibold flex-1" style={{ color: "var(--text-primary)" }}>
                 {selectedTrace.name}
               </span>
+              <a
+                href={`/traces/${selectedId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] shrink-0"
+                style={{ width: 32, height: 32, color: "var(--text-tertiary)" }}
+                aria-label="Open full view in new tab"
+              >
+                <ExternalLink size={16} />
+              </a>
               <button
                 onClick={() => setOpenMobile(true)}
                 className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] shrink-0"

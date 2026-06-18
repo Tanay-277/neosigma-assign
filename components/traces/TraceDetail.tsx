@@ -66,6 +66,16 @@ export function TraceDetail({ trace }: TraceDetailProps) {
             >
               {trace.name}
             </h2>
+            <a
+              href={`/traces/${trace.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] shrink-0 ml-0.5"
+              style={{ width: 24, height: 24, color: "var(--text-tertiary)" }}
+              aria-label="Open full view in new tab"
+            >
+              <ExternalLink size={12} />
+            </a>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {/* Status badge */}
