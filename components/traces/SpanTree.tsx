@@ -62,13 +62,13 @@ export function SpanTree({ trace }: SpanTreeProps) {
         }}
       >
         <span
-          className="flex-1 text-[10px] font-semibold uppercase tracking-widest"
-          style={{ color: "var(--text-disabled)", paddingLeft: 4 }}
+          className="flex-1 text-[10px] font-semibold uppercase font-mono tracking-widest"
+          style={{ color: "var(--text-disabled)" }}
         >
           Span
         </span>
         <span
-          className="w-12 text-right text-[10px] font-semibold uppercase tracking-widest"
+          className="w-12 shrink-0 text-right text-[10px] font-semibold uppercase font-mono tracking-widest"
           style={{ color: "var(--text-disabled)" }}
         >
           Latency

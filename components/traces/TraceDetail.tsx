@@ -2,11 +2,10 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { Copy, Check, ExternalLink, ThumbsUp, ThumbsDown, ArrowLeft } from "lucide-react"
+import { Copy, Check, ExternalLink, ThumbsUp, ThumbsDown, ArrowLeft, ListTree, Info } from "lucide-react"
 import type { Trace } from "@/lib/types"
 import { hasSlackMessages } from "@/lib/data/slack-cards"
 import { SpanTree } from "@/components/traces/SpanTree"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 
 
@@ -26,6 +25,7 @@ interface TraceDetailProps {
 
 export function TraceDetail({ trace }: TraceDetailProps) {
   const [idCopied, setIdCopied] = useState(false)
+  const [activeTab, setActiveTab] = useState<"spans" | "metadata">("spans")
   const hasAlerts = hasSlackMessages(trace.id)
 
   function copyId() {
@@ -161,40 +161,40 @@ export function TraceDetail({ trace }: TraceDetailProps) {
         )}
       </div>
 
-      {/* ── Tabs ── */}
-      <Tabs defaultValue="spans" className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <TabsList
-          className="mx-4 mt-2 shrink-0 justify-start gap-1 rounded-none border-b bg-transparent p-0"
-          style={{ borderColor: "var(--border-subtle)" }}
-        >
-          <TabsTrigger
-            value="spans"
-            className="rounded-none border-b-2 border-transparent px-3 py-1.5 text-xs data-[state=active]:border-[--accent] data-[state=active]:bg-transparent data-[state=active]:text-[--accent]"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Span Tree
-          </TabsTrigger>
-          <TabsTrigger
-            value="metadata"
-            className="rounded-none border-b-2 border-transparent px-3 py-1.5 text-xs data-[state=active]:border-[--accent] data-[state=active]:bg-transparent data-[state=active]:text-[--accent]"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            Metadata
-          </TabsTrigger>
-        </TabsList>
+      {/* ── Custom tabs ── */}
+      <div className="flex shrink-0 items-center border-b px-4" style={{ borderColor: "var(--border-subtle)" }}>
+        {(["spans", "metadata"] as const).map((tab) => {
+          const active = activeTab === tab
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold uppercase font-mono tracking-widest transition-colors"
+              style={{
+                color: active ? "var(--text-primary)" : "var(--text-tertiary)",
+                borderBottom: active ? "2px solid var(--text-primary)" : "2px solid transparent",
+              }}
+            >
+              {tab === "spans" ? <ListTree size={13} /> : <Info size={13} />}
+              {tab === "spans" ? "Span Tree" : "Metadata"}
+            </button>
+          )
+        })}
+      </div>
 
-        <TabsContent value="spans" className="mt-0 flex min-h-0 flex-1 overflow-hidden p-0">
-          <div className="flex-1 overflow-hidden">
-            <SpanTree trace={trace} />
-          </div>
-        </TabsContent>
+      {activeTab === "spans" && (
+        <div className="flex min-h-0 flex-1 overflow-hidden">
+          <SpanTree trace={trace} />
+        </div>
+      )}
 
-        <TabsContent value="metadata" className="mt-0 flex-1 overflow-y-auto p-4">
+      {activeTab === "metadata" && (
+        <div className="flex-1 overflow-y-auto p-4">
           <div className="flex flex-col gap-4">
             {/* Tags */}
             <section>
               <p
-                className="mb-2 text-[10px] font-semibold uppercase tracking-widest"
+                className="mb-2 text-[10px] font-semibold uppercase font-mono tracking-widest"
                 style={{ color: "var(--text-disabled)" }}
               >
                 Tags
@@ -203,7 +203,7 @@ export function TraceDetail({ trace }: TraceDetailProps) {
                 {trace.tags.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded px-2 py-1 text-[11px]"
+                    className="rounded-md px-2 py-1 text-[11px]"
                     style={{ background: "var(--surface-3)", color: "var(--text-secondary)" }}
                   >
                     {tag}
@@ -215,13 +215,13 @@ export function TraceDetail({ trace }: TraceDetailProps) {
             {/* Metadata */}
             <section>
               <p
-                className="mb-2 text-[10px] font-semibold uppercase tracking-widest"
+                className="mb-2 text-[10px] font-semibold uppercase font-mono tracking-widest"
                 style={{ color: "var(--text-disabled)" }}
               >
                 Metadata
               </p>
               <div
-                className="overflow-hidden rounded-md"
+                className="overflow-hidden rounded-xl"
                 style={{ border: "1px solid var(--border-subtle)" }}
               >
                 {Object.entries(trace.metadata).map(([k, v], i) => (
@@ -236,8 +236,8 @@ export function TraceDetail({ trace }: TraceDetailProps) {
                       {k}
                     </span>
                     <span
-                      className="text-right text-[11px]"
-                      style={{ color: "var(--text-secondary)", fontFamily: "var(--font-paper)" }}
+                      className="text-right text-[11px] font-mono"
+                      style={{ color: "var(--text-secondary)" }}
                     >
                       {String(v)}
                     </span>
@@ -246,8 +246,8 @@ export function TraceDetail({ trace }: TraceDetailProps) {
               </div>
             </section>
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      )}
     </div>
   )
 }

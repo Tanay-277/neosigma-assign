@@ -75,24 +75,26 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
           style={{ borderColor: "var(--border-subtle)" }}
         >
           {/* Page title */}
-          <div className="mb-2.5 flex items-center gap-2 pl-11 sm:pl-0">
-            <GitBranch size={14} style={{ color: "var(--text-tertiary)" }} />
-            <h1 className="text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
-              Traces
-            </h1>
-            <span
-              className="rounded px-1.5 py-0.5 text-[10px]"
-              style={{ background: "var(--surface-3)", color: "var(--text-tertiary)", fontFamily: "var(--font-paper)" }}
-            >
-              {filtered.length}
-            </span>
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <GitBranch size={14} style={{ color: "var(--text-tertiary)" }} />
+              <h1 className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+                Traces
+              </h1>
+              <span
+                className="rounded px-1.5 py-0.5 text-[10px] font-mono"
+                style={{ background: "var(--surface-3)", color: "var(--text-tertiary)" }}
+              >
+                {filtered.length}
+              </span>
+            </div>
           </div>
 
           {/* Search input */}
-          <div className="relative mb-2">
+          <div className="relative mb-3">
             <Search
               size={12}
-              className="absolute left-2.5 top-1/2 -translate-y-1/2"
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
               style={{ color: "var(--text-tertiary)" }}
             />
             <input
@@ -100,19 +102,17 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
               placeholder="Search traces, IDs, tags…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full rounded py-1.5 pl-7 pr-7 text-[12px] outline-none"
+              className="h-8 w-full rounded-lg pl-7 pr-7 text-[12px] outline-none"
               style={{
                 background: "var(--surface-2)",
                 border: "1px solid var(--border-subtle)",
                 color: "var(--text-primary)",
-                fontFamily: "inherit",
               }}
-              id="trace-search"
             />
             {query && (
               <button
                 onClick={() => setQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2"
+                className="absolute right-2 top-1/2 flex size-4 -translate-y-1/2 items-center justify-center rounded-full transition-colors hover:bg-muted/50"
                 style={{ color: "var(--text-tertiary)" }}
               >
                 <X size={11} />
@@ -129,20 +129,18 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
                 <button
                   key={key}
                   onClick={() => setStatusFilter(key)}
-                  className="flex items-center gap-1 rounded px-2 py-1 text-[11px] font-medium transition-all duration-75"
+                  className="flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors"
                   style={{
-                    background: isActive ? "var(--accent-muted)" : "var(--surface-2)",
-                    color: isActive ? "var(--accent)" : "var(--text-tertiary)",
-                    border: `1px solid ${isActive ? "var(--accent)" : "var(--border-subtle)"}`,
+                    background: isActive ? "var(--surface-4)" : "transparent",
+                    color: isActive ? "var(--text-primary)" : "var(--text-tertiary)",
                   }}
                 >
                   {label}
                   <span
-                    className="rounded px-1 text-[9px]"
+                    className="rounded px-1 text-[9px] font-mono"
                     style={{
-                      background: isActive ? "var(--accent-muted)" : "var(--surface-3)",
-                      color: isActive ? "var(--accent)" : "var(--text-disabled)",
-                      fontFamily: "var(--font-paper)",
+                      background: isActive ? "var(--surface-3)" : "var(--surface-3)",
+                      color: isActive ? "var(--text-secondary)" : "var(--text-disabled)",
                     }}
                   >
                     {count}
@@ -178,7 +176,7 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
         {/* Trace list */}
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+            <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
               <p className="text-[13px]" style={{ color: "var(--text-tertiary)" }}>
                 No traces match your filters
               </p>
@@ -187,12 +185,8 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
                   setQuery("")
                   setStatusFilter("all")
                 }}
-                className="rounded px-3 py-1.5 text-[12px] transition-colors hover:opacity-80"
-                style={{
-                  background: "var(--accent-muted)",
-                  color: "var(--accent)",
-                  border: "1px solid var(--accent)",
-                }}
+                className="rounded-lg px-3 py-1.5 text-[11px] font-mono transition-opacity hover:opacity-80"
+                style={{ background: "var(--surface-3)", color: "var(--text-secondary)" }}
               >
                 Clear filters
               </button>
@@ -220,16 +214,18 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
           <TraceDetail trace={selectedTrace} />
         ) : (
           <div
-            className="flex flex-1 flex-col items-center justify-center gap-3"
+            className="flex flex-1 flex-col items-center justify-center gap-4 px-6"
             style={{ background: "var(--surface-1)" }}
           >
-            <GitBranch size={32} style={{ color: "var(--text-disabled)" }} strokeWidth={1.2} />
-            <p className="text-[13px]" style={{ color: "var(--text-tertiary)" }}>
-              Select a trace to inspect
-            </p>
-            <p className="text-[11px]" style={{ color: "var(--text-disabled)" }}>
-              Click any trace in the list to view its span tree, metadata, and linked alerts
-            </p>
+            <GitBranch size={28} style={{ color: "var(--text-disabled)" }} strokeWidth={1.2} />
+            <div className="text-center">
+              <p className="text-[13px] font-medium" style={{ color: "var(--text-tertiary)" }}>
+                Select a trace to inspect
+              </p>
+              <p className="mt-1 text-[11px]" style={{ color: "var(--text-disabled)" }}>
+                Click any trace from the list
+              </p>
+            </div>
           </div>
         )}
       </div>

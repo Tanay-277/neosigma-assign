@@ -12,7 +12,7 @@ export default async function TracesPage() {
   const { TraceExplorer } = await import("@/components/traces/TraceExplorer")
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl">
       <TraceExplorer traces={allTraces} />
     </div>
   )
