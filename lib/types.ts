@@ -206,7 +206,9 @@ export interface DashboardMetrics {
   p50LatencyMs: number
   p95LatencyMs: number
   totalCostUsd: number
+  totalTokens: number
   latencyOverTime: LatencyPoint[]
+  latencyDistribution: { lower: number; upper: number; count: number }[]
   costByModel: CostByModel[]
   errorRateOverTime: ErrorRatePoint[]
   tokenUsageOverTime: TokenPoint[]

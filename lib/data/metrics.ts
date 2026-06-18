@@ -47,6 +47,23 @@ export function computeMetrics(
     .sort((a, b) => a - b)
 
   const totalCostUsd = inWindow.reduce((s, t) => s + (t.totalCostUsd ?? 0), 0)
+  const totalTokens = inWindow.reduce((s, t) => s + (t.totalTokens ?? 0), 0)
+
+  // ── Latency distribution (histogram — auto-bucketed) ────────────────────────
+  const maxLatency = latencies.length > 0 ? Math.max(...latencies) : 1
+  const bucketSize = Math.max(1, Math.ceil(maxLatency / 12))
+  const distBuckets = new Map<number, number>()
+  for (const l of latencies) {
+    const bucketIndex = Math.floor(l / bucketSize) * bucketSize
+    distBuckets.set(bucketIndex, (distBuckets.get(bucketIndex) ?? 0) + 1)
+  }
+  const latencyDistribution = Array.from(distBuckets.entries())
+    .map(([lower, count]) => ({
+      lower,
+      upper: lower + bucketSize,
+      count,
+    }))
+    .sort((a, b) => a.lower - b.lower)
 
   // ── Latency over time (6h buckets) ──────────────────────────────────────────
   const latencyByBucket = new Map<string, number[]>()
@@ -169,8 +186,10 @@ export function computeMetrics(
     p50LatencyMs: Math.round(percentile(latencies, 50)),
     p95LatencyMs: Math.round(percentile(latencies, 95)),
     totalCostUsd,
+    totalTokens,
     costOverTime,
     latencyOverTime,
+    latencyDistribution,
     costByModel,
     errorRateOverTime,
     tokenUsageOverTime,

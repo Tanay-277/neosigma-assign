@@ -33,7 +33,7 @@ type TabKey = (typeof TABS)[number]["key"]
 export function TraceDetail({ trace, fullPage = false }: TraceDetailProps) {
   const [idCopied, setIdCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>("spans")
-  const hasAlerts = hasSlackMessages(trace.id)
+  const hasAlerts = hasSlackMessages(trace.id) || trace.status === "error"
 
   function copyId() {
     navigator.clipboard.writeText(trace.id)

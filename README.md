@@ -1,21 +1,26 @@
-# Next.js template
+# LLM Observability Platform
 
-This is a Next.js template with shadcn/ui.
+## Getting Started
 
-## Adding components
-
-To add components to your app, run the following command:
+### 1. Install Dependencies
 
 ```bash
-npx shadcn@latest add button
+bun install
 ```
 
-This will place the ui components in the `components` directory.
+### 2. Run the Development Server
 
-## Using components
-
-To use the components in your app, import them as follows:
-
-```tsx
-import { Button } from "@/components/ui/button";
+```bash
+bun run dev
 ```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+---
+
+## Features
+
+- **Traces Explorer**: Trace span waterfalls detailing latency, tokens, and input/output parameters.
+- **Metrics Dashboard**: Code-split charts representing model cost, tokens, error rates, and latencies.
+- **Slack Alert Triaging**: Incident lifecycles recreating Slack block layouts.
+- **Kanban Board**: Drag-and-drop issue cards to resolve trace bugs.

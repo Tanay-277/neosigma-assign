@@ -8,7 +8,7 @@ import { HelpCircle, Sidebar, PanelLeft, ExternalLink } from "lucide-react"
 import { useSidebar } from "@/components/ui/sidebar"
 import type { IncidentGroup } from "@/lib/data/slack-cards"
 import type { SlackMessage } from "@/lib/types"
-import { getMessagesForTrace } from "@/lib/data/slack-cards"
+import { getMessagesForTrace, buildFallbackSlackMessage } from "@/lib/data/slack-cards"
 import { getTraceById } from "@/lib/data/traces"
 import { IncidentSidebar } from "@/components/slack/IncidentSidebar"
 import { LifecycleStepper } from "@/components/slack/LifecycleStepper"
@@ -51,9 +51,15 @@ export function SlackView({ groups, initialTraceId }: SlackViewProps) {
     }
   }, [])
 
-  // Get messages for active trace
+  // Get messages for active trace — fallback to generated card if none exist
   const messages: SlackMessage[] = useMemo(
-    () => (activeTraceId ? getMessagesForTrace(activeTraceId) : []),
+    () => {
+      if (!activeTraceId) return []
+      const direct = getMessagesForTrace(activeTraceId)
+      if (direct.length > 0) return direct
+      const fallback = buildFallbackSlackMessage(activeTraceId)
+      return fallback ? [fallback] : []
+    },
     [activeTraceId]
   )
 

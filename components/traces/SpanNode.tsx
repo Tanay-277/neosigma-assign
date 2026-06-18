@@ -29,13 +29,13 @@ interface SpanNodeProps {
   isSelected: boolean
   isCollapsed: boolean
   hasChildren: boolean
-  onToggle: () => void
-  onSelect: () => void
+  onToggle: (id: string) => void
+  onSelect: (id: string) => void
   traceStartMs: number
   traceDurationMs: number
 }
 
-export function SpanNodeRow({
+export const SpanNodeRow = React.memo(function SpanNodeRow({
   node,
   isSelected,
   isCollapsed,
@@ -91,7 +91,7 @@ export function SpanNodeRow({
             ? "1px solid var(--border-subtle)"
             : "none",
       }}
-      onClick={onSelect}
+      onClick={() => onSelect(node.id)}
     >
       {/* Collapse toggle */}
       <button
@@ -101,7 +101,7 @@ export function SpanNodeRow({
         )}
         onClick={(e) => {
           e.stopPropagation()
-          onToggle()
+          onToggle(node.id)
         }}
         style={{ color: "var(--text-tertiary)" }}
       >
@@ -190,4 +190,4 @@ export function SpanNodeRow({
       </div>
     </div>
   )
-}
+})

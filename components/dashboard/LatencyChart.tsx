@@ -45,7 +45,7 @@ export function LatencyChart({ data }: LatencyChartProps) {
     const innerW = width  - MARGIN.left - MARGIN.right
     const innerH = height - MARGIN.top  - MARGIN.bottom
 
-    d3.select(svg).selectAll("*").remove()
+    d3.select(svg).selectAll("*").interrupt().remove()
 
     // ── Gradient defs — vertical top-to-bottom fade, very subtle ──────────
     // p50 uses chart-1 (accent blue), p95 uses chart-3 (warm amber).

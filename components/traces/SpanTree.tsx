@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useCallback } from "react"
 import { ChevronRight } from "lucide-react"
 import type { Trace, SpanNode } from "@/lib/types"
 import { buildSpanTree, flattenSpanTree } from "@/lib/data/traces"
@@ -44,14 +44,18 @@ export function SpanTree({ trace }: SpanTreeProps) {
     [flatSpans, selectedSpanId]
   )
 
-  function toggleCollapse(id: string) {
+  const toggleCollapse = useCallback((id: string) => {
     setCollapsed((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
       else next.add(id)
       return next
     })
-  }
+  }, [])
+
+  const handleSelectSpan = useCallback((id: string) => {
+    setSelectedSpanId((prev) => (prev === id ? null : id))
+  }, [])
 
   const nodesWithChildren = useMemo(() => {
     const s = new Set<string>()
@@ -102,10 +106,8 @@ export function SpanTree({ trace }: SpanTreeProps) {
               isSelected={selectedSpanId === node.id}
               isCollapsed={collapsed.has(node.id)}
               hasChildren={nodesWithChildren.has(node.id)}
-              onToggle={() => toggleCollapse(node.id)}
-              onSelect={() =>
-                setSelectedSpanId(selectedSpanId === node.id ? null : node.id)
-              }
+              onToggle={toggleCollapse}
+              onSelect={handleSelectSpan}
               traceStartMs={traceStartMs}
               traceDurationMs={traceDurationMs}
             />

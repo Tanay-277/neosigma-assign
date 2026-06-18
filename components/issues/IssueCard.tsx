@@ -25,23 +25,31 @@ interface IssueCardProps {
   issue: Issue
 }
 
-export function IssueCard({ issue }: IssueCardProps) {
+export const IssueCard = React.memo(function IssueCard({ issue }: IssueCardProps) {
   const pc = PRIORITY_CONFIG[issue.priority]
+  const [dragging, setDragging] = React.useState(false)
 
   function handleDragStart(e: React.DragEvent) {
     e.dataTransfer.setData("text/plain", issue.id)
     e.dataTransfer.effectAllowed = "move"
+    setDragging(true)
+  }
+
+  function handleDragEnd() {
+    setDragging(false)
   }
 
   return (
     <div
       draggable
       onDragStart={handleDragStart}
-      className="cursor-grab active:cursor-grabbing"
+      onDragEnd={handleDragEnd}
+      className="cursor-grab! active:cursor-grabbing! transition-opacity duration-150"
+      style={{ opacity: dragging ? 0.5 : 1 }} 
     >
       <Link
         href={`/issues/${issue.id}`}
-        className="flex flex-col gap-2 rounded-xl border p-3 transition-all duration-150 hover:shadow-xs"
+        className="flex flex-col gap-2 rounded-xl border p-3 transition-all duration-150 hover:shadow-xs cursor-grab! active:cursor-grabbing!yup"
         style={{
           background: "var(--surface-1)",
           borderColor: "var(--border-subtle)",
@@ -102,4 +110,4 @@ export function IssueCard({ issue }: IssueCardProps) {
       </Link>
     </div>
   )
-}
+})

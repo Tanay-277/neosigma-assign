@@ -1,7 +1,9 @@
 import type { Issue, IssueStatus } from "@/lib/types"
 
-let nextNumber = 8
-let issues: Issue[] = [
+const STORAGE_KEY = "sigma_issues"
+const NEXT_KEY = "sigma_issues_next"
+
+const SEED_ISSUES: Issue[] = [
   {
     id: "ISS-001",
     title: "customer_support_agent failure",
@@ -88,12 +90,40 @@ let issues: Issue[] = [
   },
 ]
 
+let _issues: Issue[] = [...SEED_ISSUES]
+let _nextNumber = 8
+let _initialized = false
+
+function init() {
+  if (_initialized) return
+  _initialized = true
+  if (typeof localStorage === "undefined") return
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (stored) {
+    try {
+      _issues = JSON.parse(stored)
+      _nextNumber = parseInt(localStorage.getItem(NEXT_KEY) ?? "8", 10)
+      return
+    } catch { /* fall through */ }
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_ISSUES))
+  localStorage.setItem(NEXT_KEY, "8")
+}
+
+function persist() {
+  if (typeof localStorage === "undefined") return
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(_issues))
+  localStorage.setItem(NEXT_KEY, String(_nextNumber))
+}
+
 export function createIssue(params: {
   traceId: string
   traceName: string
   error: string
+  description?: string
 }): Issue {
-  const num = nextNumber++
+  init()
+  const num = _nextNumber++
   const issue: Issue = {
     id: `ISS-${String(num).padStart(3, "0")}`,
     title: params.traceName,
@@ -104,30 +134,37 @@ export function createIssue(params: {
     traceName: params.traceName,
     error: params.error,
     createdAt: new Date().toISOString(),
-    description: params.error || `Investigate failure in ${params.traceName}`,
+    description: params.description ?? params.error,
   }
-  issues = [issue, ...issues]
+  _issues = [issue, ..._issues]
+  persist()
   return issue
 }
 
 export function getAllIssues(): Issue[] {
-  return issues
+  init()
+  return _issues
 }
 
 export function getIssueById(id: string): Issue | undefined {
-  return issues.find((i) => i.id === id)
+  init()
+  return _issues.find((i) => i.id === id)
 }
 
 export function updateIssueStatus(id: string, status: IssueStatus): Issue | undefined {
-  const idx = issues.findIndex((i) => i.id === id)
+  init()
+  const idx = _issues.findIndex((i) => i.id === id)
   if (idx === -1) return undefined
-  issues[idx] = { ...issues[idx], status }
-  return issues[idx]
+  _issues[idx] = { ..._issues[idx], status }
+  persist()
+  return _issues[idx]
 }
 
 export function updateIssue(id: string, updates: Partial<Issue>): Issue | undefined {
-  const idx = issues.findIndex((i) => i.id === id)
+  init()
+  const idx = _issues.findIndex((i) => i.id === id)
   if (idx === -1) return undefined
-  issues[idx] = { ...issues[idx], ...updates }
-  return issues[idx]
+  _issues[idx] = { ..._issues[idx], ...updates }
+  persist()
+  return _issues[idx]
 }

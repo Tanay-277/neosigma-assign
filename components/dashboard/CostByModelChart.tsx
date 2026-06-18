@@ -82,7 +82,7 @@ export function CostByModelChart({ data }: CostByModelChartProps) {
     const innerW = width  - margin.left - margin.right
     const innerH = data.length * rowH
 
-    d3.select(svg).selectAll("*").remove()
+    d3.select(svg).selectAll("*").interrupt().remove()
     d3.select(svg).attr("width", width).attr("height", height)
 
     const root = d3

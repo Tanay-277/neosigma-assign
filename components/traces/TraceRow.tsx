@@ -50,7 +50,7 @@ interface TraceRowProps {
   variant?: "compact" | "spacious"
 }
 
-export function TraceRow({ trace, selected, onSelect, variant = "compact" }: TraceRowProps) {
+export const TraceRow = React.memo(function TraceRow({ trace, selected, onSelect, variant = "compact" }: TraceRowProps) {
   const model = getModel(trace)
   const env = trace.metadata.environment
 
@@ -151,4 +151,4 @@ export function TraceRow({ trace, selected, onSelect, variant = "compact" }: Tra
       </span>
     </div>
   )
-}
+})

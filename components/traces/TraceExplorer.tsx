@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useCallback, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Search, X, GitBranch, ArrowUpDown, ArrowUp, ArrowDown, LayoutList, LayoutGrid, ArrowLeft, PanelLeft, ExternalLink } from "lucide-react"
 import { useSidebar } from "@/components/ui/sidebar"
@@ -87,7 +87,20 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
     [traces, selectedId]
   )
 
-  function handleSelect(id: string) {
+  const [visibleCount, setVisibleCount] = useState(50)
+
+  useEffect(() => {
+    setVisibleCount(50)
+  }, [statusFilter, query, sort])
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget
+    if (scrollHeight - scrollTop - clientHeight < 100) {
+      setVisibleCount((prev) => Math.min(prev + 50, sorted.length))
+    }
+  }, [sorted.length])
+
+  const handleSelect = useCallback((id: string) => {
     if (typeof window !== "undefined" && window.innerWidth < 1024) {
       router.push(`/traces/${id}`)
       return
@@ -99,7 +112,7 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
       params.set("id", id)
     }
     router.replace(`/traces?${params.toString()}`, { scroll: false })
-  }
+  }, [router, searchParams])
 
   function handleSort(field: SortField) {
     setSort((prev) => {
@@ -275,7 +288,7 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
         </div>
 
         {/* Trace list */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto" onScroll={handleScroll}>
           {sorted.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
               <p className="text-[13px]" style={{ color: "var(--text-tertiary)" }}>
@@ -296,7 +309,7 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
               </button>
             </div>
           ) : (
-            sorted.map((trace) => (
+            sorted.slice(0, visibleCount).map((trace) => (
               <TraceRow
                 key={trace.id}
                 trace={trace}

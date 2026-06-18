@@ -43,7 +43,7 @@ export function ErrorRateChart({ data }: ErrorRateChartProps) {
     const innerW = width - MARGIN.left - MARGIN.right
     const innerH = height - MARGIN.top - MARGIN.bottom
 
-    d3.select(svg).selectAll("*").remove()
+    d3.select(svg).selectAll("*").interrupt().remove()
     d3.select(svg).attr("width", width).attr("height", height)
 
     // Gradient def

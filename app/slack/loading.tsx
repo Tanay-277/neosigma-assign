@@ -20,7 +20,7 @@ export default function SlackLoading() {
       >
         {/* Header */}
         <div
-          className="flex items-center gap-2 border-b pl-14 pr-4 py-3 shrink-0 h-13 lg:px-4"
+          className="flex items-center gap-2 border-b px-4 py-3 shrink-0 h-13"
           style={{ borderColor: "var(--border-subtle)" }}
         >
           <Skeleton className="h-4 w-4 rounded-full" />
@@ -52,7 +52,7 @@ export default function SlackLoading() {
       >
         {/* Header row skeleton */}
         <div
-          className="flex shrink-0 items-center gap-4 border-b pl-14 pr-4 md:px-6 h-13 lg:pl-6"
+          className="flex shrink-0 items-center gap-4 border-b px-4 md:px-6 h-13 lg:pl-6"
           style={{ borderColor: "var(--border-subtle)", background: "var(--surface-1)" }}
         >
           <div className="flex items-center gap-1.5 py-4">

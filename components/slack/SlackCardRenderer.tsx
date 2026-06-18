@@ -1,9 +1,14 @@
 "use client"
 
 import React, { useState } from "react"
-import type { SlackMessage, Lifecycle } from "@/lib/types"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+import type { SlackMessage, Lifecycle, Trace } from "@/lib/types"
 import { renderBlock } from "@/components/slack/blocks/registry"
-import { Code, LayoutGrid } from "lucide-react"
+import { Code, LayoutGrid, Plus, Check } from "lucide-react"
+import { createIssue } from "@/lib/data/issues"
+import { getTraceById } from "@/lib/data/traces"
 
 const LIFECYCLE_TEXT_COLOR: Record<Lifecycle, string> = {
   alert:         "var(--status-error)",
@@ -24,11 +29,44 @@ function relativeTime(iso: string): string {
 
 interface SlackCardRendererProps {
   message: SlackMessage
+  traceId?: string
 }
 
-export function SlackCardRenderer({ message }: SlackCardRendererProps) {
+export function SlackCardRenderer({ message, traceId }: SlackCardRendererProps) {
+  const router = useRouter()
   const [showRaw, setShowRaw] = useState(false)
+  const [createdIssue, setCreatedIssue] = useState<string | null>(null)
   const labelColor = LIFECYCLE_TEXT_COLOR[message.lifecycle]
+
+  const trace = traceId ? getTraceById(traceId) : null
+
+  function handleCreateIssue() {
+    if (!trace) return
+    const errSpan = trace.spans.find((s) => s.error)
+    const errMsg = errSpan?.error ?? "Unknown error"
+    const desc =
+      errSpan
+        ? `The ${errSpan.type} step "${errSpan.name}" failed in environment "${trace.metadata.environment ?? "unknown"}". Error: ${errMsg}`
+        : `Trace "${trace.name}" failed with no specific error span. Environment: ${trace.metadata.environment ?? "unknown"}`
+    const issue = createIssue({
+      traceId: trace.id,
+      traceName: trace.name,
+      error: errMsg,
+      description: desc,
+    })
+    setCreatedIssue(issue.id)
+    toast(`${issue.id} created`, {
+      description: issue.title,
+      action: {
+        label: "View",
+        onClick: () => router.push(`/issues/${issue.id}`),
+      },
+      duration: 5000,
+    })
+    setTimeout(() => {
+      router.push(`/issues/${issue.id}`)
+    }, 3000)
+  }
 
   return (
     <div className="flex w-full max-w-[680px] flex-col gap-0 select-none animate-fade-in mx-auto">
@@ -106,8 +144,42 @@ export function SlackCardRenderer({ message }: SlackCardRendererProps) {
             {JSON.stringify(message.blocks, null, 2)}
           </pre>
         ) : (
-          message.blocks.map((block, i) => renderBlock(block, i))
+          <>
+            {message.blocks.map((block, i) => renderBlock(block, i))}
+
+            {/* "Create issue" button — shown when trace data is available */}
+            {trace && (
+              <div className="flex items-center gap-2 pt-2">
+                {createdIssue ? (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold"
+                    style={{
+                      background: "color-mix(in oklch, var(--status-success) 14%, transparent)",
+                      color: "var(--status-success)",
+                      border: "1px solid color-mix(in oklch, var(--status-success) 30%, transparent)",
+                    }}
+                  >
+                    <Check size={13} />
+                    Created {createdIssue}
+                  </span>
+                ) : (
+                  <button
+                    onClick={handleCreateIssue}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-semibold transition-colors hover:opacity-80"
+                    style={{
+                      background: "var(--accent)",
+                      color: "white",
+                    }}
+                  >
+                    <Plus size={13} />
+                    Create issue
+                  </button>
+                )}
+              </div>
+            )}
+          </>
         )}
+
       </div>
     </div>
   )

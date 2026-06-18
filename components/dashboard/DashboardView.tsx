@@ -1,13 +1,18 @@
 "use client"
 
 import React from "react"
+import { PanelLeft } from "lucide-react"
+import { useSidebar } from "@/components/ui/sidebar"
 import type { DashboardMetrics } from "@/lib/types"
 import { KpiCard } from "./KpiCard"
-import { LatencyChart } from "./LatencyChart"
-import { CostByModelChart } from "./CostByModelChart"
-import { ErrorRateChart } from "./ErrorRateChart"
-import { TokenUsageChart } from "./TokenUsageChart"
+import { formatInt } from "@/lib/utils"
 import { ModelBreakdownPanel } from "./model-breakdown/panel"
+import dynamic from "next/dynamic"
+
+const LatencyHistogram = dynamic(() => import("./LatencyHistogram").then(m => m.LatencyHistogram), { ssr: false })
+const CostByModelChart = dynamic(() => import("./CostByModelChart").then(m => m.CostByModelChart), { ssr: false })
+const ErrorRateChart = dynamic(() => import("./ErrorRateChart").then(m => m.ErrorRateChart), { ssr: false })
+const TokenUsageChart = dynamic(() => import("./TokenUsageChart").then(m => m.TokenUsageChart), { ssr: false })
 
 interface DashboardViewProps {
   metrics: DashboardMetrics
@@ -51,13 +56,23 @@ function ChartCard({
 }
 
 export function DashboardView({ metrics }: DashboardViewProps) {
+  const { setOpenMobile } = useSidebar()
+
   return (
     <div className="flex flex-col overflow-hidden" style={{ height: "100%" }}>
       {/* Header */}
       <div
-        className="flex shrink-0 items-center justify-between border-b pl-14 pr-4 sm:px-6 py-4"
+        className="flex shrink-0 items-center gap-3 border-b px-4 sm:px-6 py-4"
         style={{ borderColor: "var(--border-subtle)" }}
       >
+        <button
+          onClick={() => setOpenMobile(true)}
+          className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] lg:hidden shrink-0"
+          style={{ width: 32, height: 32, color: "var(--text-tertiary)" }}
+          aria-label="Open sidebar"
+        >
+          <PanelLeft size={16} />
+        </button>
         <div>
           <h1 className="text-base font-semibold" style={{ color: "var(--text-primary)" }}>
             Dashboard
@@ -72,11 +87,11 @@ export function DashboardView({ metrics }: DashboardViewProps) {
       <div className="flex-1 overflow-y-auto p-4 xl:p-6">
         <div className="flex w-full flex-col gap-6">
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 rounded-3xl overflow-hidden gap-px" style={{ background: "var(--border-subtle)" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 rounded-3xl overflow-hidden gap-px" style={{ background: "var(--border-subtle)" }}>
             <KpiCard
               id="kpi-total-traces"
               label="Total Traces"
-              value={metrics.totalTraces.toLocaleString()}
+              value={formatInt(metrics.totalTraces)}
               subtext="in the last 14 days"
               accentColor="var(--accent)"
               change="+8.3%"
@@ -128,13 +143,24 @@ export function DashboardView({ metrics }: DashboardViewProps) {
               trend="neutral"
               sparklineData={metrics.costOverTime.map(d => d.cost)}
             />
+            <KpiCard
+              id="kpi-total-tokens"
+              className="sm:col-span-2 lg:col-span-2 xl:col-span-1"
+              label="Total Tokens"
+              value={formatInt(metrics.totalTokens)}
+              subtext="across all traces"
+              accentColor="var(--chart-2)"
+              change="+5.1%"
+              trend="up"
+              sparklineData={metrics.tokenUsageOverTime.map(d => d.promptTokens + d.completionTokens)}
+            />
           </div>
 
           {/* Charts row 1 */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <ChartCard
               id="chart-latency"
-              title="Latency over time"
+              title="Latency distribution"
               subtitle={
                 <div className="flex items-center gap-3">
                   <span className="flex items-center gap-1.5">
@@ -142,16 +168,17 @@ export function DashboardView({ metrics }: DashboardViewProps) {
                     <span>p50</span>
                   </span>
                   <span className="flex items-center gap-1.5">
-                    <svg width={14} height={2} aria-hidden className="shrink-0">
-                      <line x1={0} y1={1} x2={14} y2={1}
-                        stroke="var(--chart-3)" strokeWidth={1.5} strokeDasharray="4,3" />
-                    </svg>
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: "var(--chart-3)" }} />
                     <span>p95</span>
                   </span>
                 </div>
               }
             >
-              <LatencyChart data={metrics.latencyOverTime} />
+              <LatencyHistogram
+                data={metrics.latencyDistribution}
+                p50={metrics.p50LatencyMs}
+                p95={metrics.p95LatencyMs}
+              />
             </ChartCard>
 
             <ChartCard

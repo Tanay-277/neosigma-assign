@@ -1,4 +1,5 @@
 import type { SlackMessage, Lifecycle } from "@/lib/types"
+import { getTraceById } from "@/lib/data/traces"
 import rawData from "@/doc/slack-cards.json"
 
 const data = rawData as { messages: SlackMessage[] }
@@ -52,6 +53,67 @@ export interface IncidentGroup {
   channel: string
   messages: SlackMessage[]
   latestLifecycle: Lifecycle
+}
+
+/** Build a simple fallback alert card from trace data when no pre-defined card exists */
+export function buildFallbackSlackMessage(traceId: string): SlackMessage | null {
+  const trace = getTraceById(traceId)
+  if (!trace || trace.status !== "error") return null
+
+  const errSpan = trace.spans.find((s) => s.error)
+  const errMsg = errSpan?.error ?? "Unknown error"
+  const model = trace.spans.find((s) => s.model)?.model ?? "unknown"
+
+  return {
+    id: `fallback_${traceId}`,
+    scenario: "Auto-generated alert for failed trace without pre-defined card",
+    channel: "#llm-ops",
+    postedAt: new Date().toISOString(),
+    traceId,
+    lifecycle: "alert",
+    blocks: [
+      {
+        type: "header",
+        text: { type: "plain_text", text: `:rotating_light: Trace failed — ${trace.name}`, emoji: true },
+      },
+      {
+        type: "context",
+        elements: [
+          { type: "mrkdwn", text: "*Status:* Needs attention" },
+          { type: "mrkdwn", text: `Posted ${new Date().toLocaleString()}` },
+        ],
+      },
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: errSpan
+            ? `The \`${errSpan.type}\` step *"${errSpan.name}"* failed in environment *${trace.metadata.environment ?? "unknown"}*.\n\`\`\`\n${errMsg}\n\`\`\``
+            : `Trace failed with no specific error span.\n\`\`\`\n${errMsg}\n\`\`\``,
+        },
+      },
+      {
+        type: "section",
+        fields: [
+          { type: "mrkdwn", text: `*Cost:*\n$${trace.totalCostUsd.toFixed(6)}` },
+          { type: "mrkdwn", text: `*Model:*\n${model}` },
+          { type: "mrkdwn", text: `*Environment:*\n${trace.metadata.environment ?? "production"}` },
+          { type: "mrkdwn", text: `*Tokens:*\n${trace.totalTokens.toLocaleString()}` },
+        ],
+      },
+      {
+        type: "actions",
+        elements: [
+          {
+            type: "button",
+            text: { type: "plain_text", text: "View Trace", emoji: true },
+            action_id: "view_trace",
+            url: `/traces/${traceId}`,
+          },
+        ],
+      },
+    ],
+  }
 }
 
 export function getAllIncidentGroups(): IncidentGroup[] {

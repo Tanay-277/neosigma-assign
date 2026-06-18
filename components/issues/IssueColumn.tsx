@@ -42,16 +42,17 @@ export function IssueColumn({ status, issues, onStatusChange }: IssueColumnProps
 
   return (
     <div
-      className="flex w-72 shrink-0 flex-col overflow-hidden"
+      className="flex w-[340px] shrink-0 flex-col"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      style={{
-        outline: dragOver ? "2px dashed var(--accent)" : "none",
-        outlineOffset: -2,
-        borderRadius: 12,
-      }}
     >
+      <div
+        className="flex flex-col flex-1 rounded-xl p-3 transition-all duration-150 overflow-hidden"
+        style={{
+          border: dragOver ? "2px dashed var(--accent)" : "2px solid transparent",
+        }}
+      >
       {/* Header */}
       <div className="flex items-center gap-2 px-1 pb-3">
         <span className="size-2 rounded-full shrink-0" style={{ background: cfg.color }} />
@@ -76,6 +77,7 @@ export function IssueColumn({ status, issues, onStatusChange }: IssueColumnProps
             No issues
           </div>
         )}
+      </div>
       </div>
     </div>
   )

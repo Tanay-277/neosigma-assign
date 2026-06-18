@@ -133,17 +133,23 @@ export function ModelBreakdownPanel({ data }: ModelBreakdownPanelProps) {
 
   return (
     <div
-      className="flex flex-col lg:flex-row gap-6 rounded-3xl animate-fade-in"
+      className="animate-fade-in flex flex-col gap-6 rounded-3xl lg:flex-row"
       style={{
         background: "var(--surface-2)",
       }}
     >
-      <div className="flex flex-col flex-1 min-w-0 gap-4 p-4 md:p-5">
+      <div className="flex min-w-0 flex-1 flex-col gap-4 p-4 md:p-5">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold uppercase font-mono tracking-widest" style={{ color: "var(--text-tertiary)" }}>
+          <h3
+            className="font-mono text-sm font-semibold tracking-widest uppercase"
+            style={{ color: "var(--text-tertiary)" }}
+          >
             Model breakdown
           </h3>
-          <span className="font-mono text-[10px]" style={{ color: "var(--text-tertiary)" }}>
+          <span
+            className="font-mono text-[10px]"
+            style={{ color: "var(--text-tertiary)" }}
+          >
             {filteredData.length}/{data.length}
           </span>
         </div>
@@ -164,14 +170,17 @@ export function ModelBreakdownPanel({ data }: ModelBreakdownPanelProps) {
                 onClick={() => setGlobalFilter("")}
                 className="absolute top-1/2 right-1.5 flex size-4 -translate-y-1/2 items-center justify-center rounded-full transition-colors hover:bg-muted/50"
               >
-                <X className="size-3" style={{ color: "var(--text-tertiary)" }} />
+                <X
+                  className="size-3"
+                  style={{ color: "var(--text-tertiary)" }}
+                />
               </button>
             )}
           </div>
           {selectedCount > 0 && (
             <button
               onClick={handleClearSelection}
-              className="font-mono text-[10px] transition-opacity hover:opacity-80 shrink-0"
+              className="shrink-0 font-mono text-[10px] transition-opacity hover:opacity-80"
               style={{ color: "var(--text-tertiary)" }}
             >
               Clear ({selectedCount})
@@ -187,17 +196,24 @@ export function ModelBreakdownPanel({ data }: ModelBreakdownPanelProps) {
           onRowSelectionChange={setRowSelection}
         />
       </div>
-      <div className="shrink-0 flex flex-col animate-slide-up bg-border/50 rounded-2xl m-2 overflow-hidden">
-        <div className="grid grid-cols-1 xs:grid-cols-3" style={{ borderBottom: "1px solid var(--border-subtle)" }}>
+      <div className="animate-slide-up m-2 flex shrink-0 flex-col overflow-hidden rounded-2xl bg-border/50 dark:bg-(--surface-1)/">
+        <div
+          className="grid grid-cols-1 xs:grid-cols-3 border-b border-subtle dark:border-input/50"
+          // style={{ borderBottom: "1px solid var(--border-subtle)" }}
+        >
           {METRICS.map((m) => {
             const active = donutMetric === m.value
             return (
               <button
                 key={m.value}
-                onClick={() => setDonutMetric(m.value as "traces" | "cost" | "tokens")}
+                onClick={() =>
+                  setDonutMetric(m.value as "traces" | "cost" | "tokens")
+                }
                 className="flex items-center justify-center gap-1.5 px-3 py-3 font-mono text-xs font-semibold tracking-widest uppercase transition-colors"
                 style={{
-                  color: active ? "var(--text-primary)" : "var(--text-tertiary)",
+                  color: active
+                    ? "var(--text-primary)"
+                    : "var(--text-tertiary)",
                   background: active ? "var(--surface-4)" : "transparent",
                 }}
               >
@@ -207,7 +223,7 @@ export function ModelBreakdownPanel({ data }: ModelBreakdownPanelProps) {
             )
           })}
         </div>
-        <div className="flex w-full flex-col xs:flex-row items-center gap-4 lg:flex-col lg:items-center p-4 md:p-5 pt-3">
+        <div className="flex w-full flex-col items-center gap-4 p-4 pt-3 xs:flex-row md:p-5 lg:flex-col lg:items-center">
           <div className="flex min-w-0 flex-1 justify-center">
             <DonutChart
               data={donutData}

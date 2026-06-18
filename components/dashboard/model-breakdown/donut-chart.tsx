@@ -54,7 +54,7 @@ export function DonutChart({
     const svg = svgRef.current
     if (!svg) return
 
-    d3.select(svg).selectAll("*").remove()
+    d3.select(svg).selectAll("*").interrupt().remove()
     d3.select(svg).attr("viewBox", `0 0 ${WIDTH} ${HEIGHT}`)
 
     const g = d3

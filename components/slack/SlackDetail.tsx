@@ -5,7 +5,7 @@ import Link from "next/link"
 import { HugeiconsIcon } from "@hugeicons/react"
 import { ArrowLeft01Icon } from "@hugeicons/core-free-icons"
 import { Sidebar, ExternalLink } from "lucide-react"
-import { getMessagesForTrace } from "@/lib/data/slack-cards"
+import { getMessagesForTrace, buildFallbackSlackMessage } from "@/lib/data/slack-cards"
 import { getTraceById } from "@/lib/data/traces"
 import { SlackCardRenderer } from "@/components/slack/SlackCardRenderer"
 import { LifecycleStepper } from "@/components/slack/LifecycleStepper"
@@ -21,7 +21,13 @@ export function SlackDetail({ traceId }: SlackDetailProps) {
   })
   const [showContext, setShowContext] = useState(true)
 
-  const messages = useMemo(() => getMessagesForTrace(traceId), [traceId])
+  const messages = useMemo(() => {
+    const direct = getMessagesForTrace(traceId)
+    if (direct.length > 0) return direct
+    const fallback = buildFallbackSlackMessage(traceId)
+    return fallback ? [fallback] : []
+  }, [traceId])
+
   const activeTrace = useMemo(() => getTraceById(traceId), [traceId])
 
   const activeMessage = useMemo(

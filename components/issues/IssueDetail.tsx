@@ -88,7 +88,7 @@ export function IssueDetail({ issue, trace }: IssueDetailProps) {
         </span>
         <Select value={currentStatus} onValueChange={handleStatusChange}>
           <SelectTrigger
-            className="h-auto rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider leading-none border-0 gap-1"
+            className="h-auto  text-[9px] font-semibold uppercase tracking-wider leading-none border-0 gap-1"
             style={{ background: sc.bg, color: sc.color }}
           >
             <SelectValue />
@@ -97,7 +97,7 @@ export function IssueDetail({ issue, trace }: IssueDetailProps) {
             {STATUSES.map((s) => (
               <SelectItem key={s} value={s} className="text-xs">
                 <span className="flex items-center gap-2">
-                  <span className="size-1.5 rounded-full" style={{ background: STATUS_CONFIG[s].color }} />
+                  <span  style={{ background: STATUS_CONFIG[s].color }} />
                   {STATUS_CONFIG[s].label}
                 </span>
               </SelectItem>

@@ -4,17 +4,19 @@ import React, { ViewTransition } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
+import { Toaster } from "sonner"
 import { HugeiconsIcon } from "@hugeicons/react"
 import {
   GitBranchIcon,
   Message01Icon,
   DashboardCircleIcon,
+  Bug01Icon,
   SunIcon,
   Moon01Icon,
   ArrowLeft01Icon,
   AbsoluteIcon,
 } from "@hugeicons/core-free-icons"
-import { PanelLeftIcon } from "lucide-react"
+
 
 import {
   SidebarProvider,
@@ -37,6 +39,7 @@ import { Kbd } from "@/components/ui/kbd"
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: DashboardCircleIcon },
   { href: "/traces", label: "Traces", icon: GitBranchIcon },
+  { href: "/issues", label: "Issues", icon: Bug01Icon },
   { href: "/slack", label: "Alerts", icon: Message01Icon },
 ] as const
 
@@ -82,8 +85,10 @@ function NavItem({
   icon: typeof DashboardCircleIcon
   active: boolean
 }) {
+  const { setOpenMobile } = useSidebar()
+
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem onClick={() => setOpenMobile(false)}>
       <SidebarMenuButton
         className={BTN_CLASS}
         isActive={active}
@@ -163,22 +168,6 @@ function CollapseToggle() {
   )
 }
 
-
-function MobileToggle() {
-  const { setOpenMobile } = useSidebar()
-
-  return (
-    <button
-      onClick={() => setOpenMobile(true)}
-      className="absolute top-3 left-3 z-10 flex size-8 items-center justify-center rounded-lg sm:hidden"
-      style={{ background: "var(--surface-3)" }}
-      aria-label="Open sidebar"
-    >
-      <PanelLeftIcon size={14} style={{ color: "var(--text-secondary)" }} />
-    </button>
-  )
-}
-
 export function AppShell({
   children,
   defaultOpen = true,
@@ -221,12 +210,23 @@ export function AppShell({
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset  className="bg-(--bg)/90">
-        <MobileToggle />
+      <SidebarInset className="bg-(--bg)/90">
         <ViewTransition name="page">
           {children}
         </ViewTransition>
       </SidebarInset>
+      <Toaster
+        position="bottom-center"
+        toastOptions={{
+          style: {
+            background: "var(--surface-2)",
+            border: "1px solid var(--border-subtle)",
+            color: "var(--text-primary)",
+            fontFamily: "var(--font-general)",
+            fontSize: "13px",
+          },
+        }}
+      />
     </SidebarProvider>
   )
 }

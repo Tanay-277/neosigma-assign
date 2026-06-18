@@ -45,7 +45,21 @@ export function Sparkline({
   animated = true,
   height: H = 36,
 }: SparklineProps) {
-  const W = fullWidth ? 240 : 96
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const [width, setWidth] = React.useState(fullWidth ? 240 : 96)
+
+  React.useEffect(() => {
+    if (!fullWidth || !containerRef.current) return
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setWidth(entry.contentRect.width)
+      }
+    })
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [fullWidth])
+
+  const W = width
   const id = React.useId()
   const clipRectRef = React.useRef<SVGRectElement>(null)
 
@@ -86,14 +100,14 @@ export function Sparkline({
   }, [data, animated, W])
 
   return (
-    <svg
-      width={fullWidth ? "100%" : W}
-      height={H}
-      viewBox={`0 0 ${W} ${H}`}
-      className={fullWidth ? "w-full overflow-visible" : "shrink-0 overflow-visible"}
-      aria-hidden="true"
-      preserveAspectRatio="none"
-    >
+    <div ref={containerRef} className={fullWidth ? "w-full overflow-visible" : "shrink-0 overflow-visible"}>
+      <svg
+        width={W}
+        height={H}
+        viewBox={`0 0 ${W} ${H}`}
+        className="overflow-visible w-full h-full block"
+        aria-hidden="true"
+      >
       <defs>
         {/* Accent gradient */}
         <linearGradient id={`${id}-grad`} x1="0" y1="0" x2="0" y2="1">
@@ -157,6 +171,7 @@ export function Sparkline({
       <circle cx={last.x} cy={last.y} r={5} fill={color} opacity={0.18} />
       <circle cx={last.x} cy={last.y} r={3} fill="white" stroke={color} strokeWidth={1.5} />
       <circle cx={last.x} cy={last.y} r={1.2} fill={color} />
-    </svg>
+      </svg>
+    </div>
   )
 }

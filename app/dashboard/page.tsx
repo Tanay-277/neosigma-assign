@@ -15,7 +15,7 @@ export default async function DashboardPage() {
   const metrics = computeMetrics(allTraces, 14)
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl">
+    <div className="flex h-full flex-col overflow-hidden md:rounded-2xl bg-(--surface-1)">
       <DashboardView metrics={metrics} />
     </div>
   )

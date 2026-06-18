@@ -26,6 +26,7 @@ interface KpiCardProps {
   sparklineData?: number[]
   id?: string
   tabs?: KpiTab[]
+  className?: string
 }
 
 const TREND_COLORS = {
@@ -53,6 +54,7 @@ export function KpiCard({
   sparklineData: staticData,
   id,
   tabs,
+  className,
 }: KpiCardProps) {
   const [activeIdx, setActiveIdx] = React.useState(0)
   const [switching, setSwitching] = React.useState(false)
@@ -119,7 +121,7 @@ export function KpiCard({
   return (
     <div
       id={id}
-      className="relative flex flex-col gap-0 overflow-hidden p-4 md:p-5"
+      className={`relative flex flex-col gap-0 overflow-hidden p-4 md:p-5 ${className ?? ""}`}
       style={{ background: "var(--surface-2)", minWidth: 260 }}
     >
       {/* Label row — trend pill at top right for all cards */}
