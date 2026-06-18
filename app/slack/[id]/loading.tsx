@@ -9,7 +9,7 @@ function Skeleton({ className }: { className?: string }) {
 
 export default function SlackAlertLoading() {
   return (
-    <div className="flex h-full flex-col overflow-hidden md:rounded-2xl bg-(--surface-1)">
+    <div className="flex h-full flex-col overflow-hidden sm:rounded-2xl bg-(--surface-1)">
       {/* Header */}
       <div
         className="flex shrink-0 items-center gap-4 border-b px-4 md:px-6 h-13"

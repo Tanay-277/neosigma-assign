@@ -154,7 +154,7 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setOpenMobile(true)}
-                className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] lg:hidden shrink-0"
+                className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] sm:hidden shrink-0"
                 style={{ width: 32, height: 32, color: "var(--text-tertiary)" }}
                 aria-label="Open sidebar"
               >
@@ -360,7 +360,7 @@ export function TraceExplorer({ traces, initialId }: TraceExplorerProps) {
               </a>
               <button
                 onClick={() => setOpenMobile(true)}
-                className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] shrink-0"
+                className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] sm:hidden shrink-0"
                 style={{ width: 32, height: 32, color: "var(--text-tertiary)" }}
                 aria-label="Open sidebar"
               >

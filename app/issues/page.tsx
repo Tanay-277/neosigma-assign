@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic"
 
 export default function IssuesPage() {
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl bg-(--surface-1)">
+    <div className="flex h-full flex-col overflow-hidden sm:rounded-2xl bg-(--surface-1)">
       <IssueBoard />
     </div>
   )

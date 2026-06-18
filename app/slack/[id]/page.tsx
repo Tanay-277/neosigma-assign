@@ -27,7 +27,7 @@ export default async function SlackAlertPage({ params }: Props) {
   const { SlackDetail } = await import("@/components/slack/SlackDetail")
 
   return (
-    <div className="flex h-full flex-col overflow-hidden md:rounded-2xl bg-(--surface-1)">
+    <div className="flex h-full flex-col overflow-hidden sm:rounded-2xl bg-(--surface-1)">
       <SlackDetail traceId={id} />
     </div>
   )

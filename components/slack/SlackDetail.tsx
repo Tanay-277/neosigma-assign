@@ -65,6 +65,17 @@ export function SlackDetail({ traceId }: SlackDetailProps) {
         style={{ borderColor: "var(--border-subtle)", background: "var(--surface-1)" }}
       >
         <Link
+          href="/slack"
+          className="flex items-center gap-1.5 py-4 text-[11px] transition-colors hover:opacity-80 text-[var(--text-secondary)]"
+          title="Back to alerts list"
+        >
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={12} className="shrink-0" />
+          <span>Alerts</span>
+        </Link>
+
+        <div className="h-4 w-px" style={{ background: "var(--border-subtle)" }} />
+
+        <Link
           href={`/traces/${traceId}`}
           className="flex items-center gap-1.5 py-4 text-[11px] transition-colors hover:opacity-80"
           style={{ color: "var(--text-secondary)" }}

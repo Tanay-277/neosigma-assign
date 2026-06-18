@@ -75,7 +75,7 @@ export function SlackView({ groups, initialTraceId }: SlackViewProps) {
 
   function handleTraceSelect(traceId: string) {
     if (typeof window !== "undefined" && window.innerWidth < 1024) {
-      window.open(`/traces/${traceId}`, "_self")
+      window.open(`/slack/${traceId}`, "_self")
       return
     }
     setActiveTraceId(traceId)
@@ -174,7 +174,7 @@ export function SlackView({ groups, initialTraceId }: SlackViewProps) {
         >
           <button
             onClick={() => setOpenMobile(true)}
-            className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] lg:hidden shrink-0"
+            className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] sm:hidden shrink-0"
             style={{ width: 32, height: 32, color: "var(--text-tertiary)" }}
             aria-label="Open sidebar"
           >

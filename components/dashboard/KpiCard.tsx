@@ -121,7 +121,7 @@ export function KpiCard({
   return (
     <div
       id={id}
-      className={`relative flex flex-col gap-0 overflow-hidden p-4 md:p-5 not-last:border-r border-subtle ${className ?? ""}`}
+      className={`relative flex flex-col gap-0 overflow-hidden p-4 md:p-5 not-last:border-r border-input/20 dark:border-border border-subtle ${className ?? ""}`}
       style={{ background: "var(--surface-2)", minWidth: 260 }}
     >
       {/* Label row — trend pill at top right for all cards */}

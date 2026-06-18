@@ -9,7 +9,7 @@ function Skeleton({ className }: { className?: string }) {
 
 export default function TraceDetailLoading() {
   return (
-    <div className="flex h-full flex-col gap-4 p-6 overflow-hidden bg-(--surface-1) md:rounded-2xl">
+    <div className="flex h-full flex-col gap-4 p-6 overflow-hidden bg-(--surface-1) rounded-2xl">
       {/* Trace header */}
       <Skeleton className="h-[18px] w-48" />
       <Skeleton className="h-[11px] w-64" />

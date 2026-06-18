@@ -42,7 +42,7 @@ export function IssueBoard() {
       >
         <button
           onClick={() => setOpenMobile(true)}
-          className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] lg:hidden shrink-0"
+          className="flex items-center justify-center rounded-lg transition-colors hover:bg-[--surface-3] sm:hidden shrink-0"
           style={{ width: 32, height: 32, color: "var(--text-tertiary)" }}
           aria-label="Open sidebar"
         >

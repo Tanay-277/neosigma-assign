@@ -24,7 +24,7 @@ function TraceRowSkeleton() {
 
 export default function TracesLoading() {
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex h-full overflow-hidden sm:rounded-2xl">
       {/* Left panel — list */}
       <div
         className="flex w-full shrink-0 flex-col border-r lg:w-[420px] xl:w-[480px]"

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { Copy, Check, ExternalLink, ThumbsUp, ThumbsDown, ListTree, Info } from "lucide-react"
+import { Copy, Check, ExternalLink, ThumbsUp, ThumbsDown, ListTree, Info, ArrowLeft } from "lucide-react"
 import type { Trace } from "@/lib/types"
 import { hasSlackMessages } from "@/lib/data/slack-cards"
 import { SpanTree } from "@/components/traces/SpanTree"
@@ -21,6 +21,7 @@ function formatCost(usd: number): string {
 interface TraceDetailProps {
   trace: Trace
   fullPage?: boolean
+  onBack?: () => void
 }
 
 const TABS = [
@@ -30,7 +31,7 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"]
 
-export function TraceDetail({ trace, fullPage = false }: TraceDetailProps) {
+export function TraceDetail({ trace, fullPage = false, onBack }: TraceDetailProps) {
   const [idCopied, setIdCopied] = useState(false)
   const [activeTab, setActiveTab] = useState<TabKey>("spans")
   const hasAlerts = hasSlackMessages(trace.id) || trace.status === "error"
@@ -61,6 +62,25 @@ export function TraceDetail({ trace, fullPage = false }: TraceDetailProps) {
         {/* Trace name + status */}
         <div className="mb-2 flex items-start justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
+            {onBack ? (
+              <button
+                onClick={onBack}
+                className="md:hidden flex items-center justify-center p-1 rounded-lg hover:bg-[--surface-3] text-[var(--text-secondary)] shrink-0 mr-1"
+                title="Back"
+              >
+                <ArrowLeft size={16} />
+              </button>
+            ) : (
+              fullPage && (
+                <Link
+                  href="/traces"
+                  className="flex items-center justify-center p-1 rounded-lg hover:bg-[--surface-3] text-[var(--text-secondary)] shrink-0 mr-1"
+                  title="Back to traces list"
+                >
+                  <ArrowLeft size={16} />
+                </Link>
+              )
+            )}
             <h2
               className="truncate text-base font-semibold leading-snug"
               style={{ color: "var(--text-primary)" }}

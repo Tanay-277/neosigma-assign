@@ -6,7 +6,7 @@ import { updateIssueStatus } from "@/lib/data/issues"
 import { IssueCard } from "@/components/issues/IssueCard"
 
 const COLUMN_CONFIG: Record<IssueStatus, { label: string; color: string }> = {
-  open:        { label: "Open",       color: "var(--accent)" },
+  open:        { label: "Open",       color: "var(--status-error)" },
   in_progress: { label: "In Progress", color: "var(--status-warning)" },
   resolved:    { label: "Resolved",   color: "var(--status-success)" },
 }
