@@ -12,7 +12,7 @@ export default async function DashboardPage() {
   const { computeMetrics } = await import("@/lib/data/metrics")
   const { DashboardView } = await import("@/components/dashboard/DashboardView")
 
-  const metrics = computeMetrics(allTraces, 14)
+  const metrics = computeMetrics(allTraces, 180)
 
   return (
     <div className="flex h-full flex-col overflow-hidden sm:rounded-2xl bg-(--surface-1)">
